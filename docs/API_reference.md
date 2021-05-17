@@ -327,7 +327,7 @@ The **refine** field can be used to reduce the request by applying certain filte
 variationId, storageLocationId
 
 Use the **additional** field to add more values to the response, valid values are:  
-storageLocation
+warehouseLocation
 
 [*Output format*]:
 

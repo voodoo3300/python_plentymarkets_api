@@ -757,7 +757,7 @@ class PlentyApi():
             additional  [list]  -   Add additional elements to the response
                                     data.
                                     Example:
-                                    ['storageLocation']
+                                    ['warehouseLocation']
 
         Return:
                         [JSON(Dict) / DataFrame] <= self.data_format

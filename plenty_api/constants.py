@@ -141,7 +141,7 @@ VALID_ADDITIONAL_VALUES = {
         'primaryBillingAddress', 'contactOrders'
     ],
     'warehouses': [
-        'storageLocation'
+        'warehouseLocation'
     ]
 }
 
