@@ -538,10 +538,18 @@ def build_transactions(order: dict, variations: dict,
     outgoing = []
     incoming = []
     for item in order['orderItems']:
-        template_variation = [
-            x for x in variations
-            if x['variation_id'] == item['itemVariationId']
-        ][0]
+        try:
+            template_variation = [
+                x for x in variations
+                if int(x['variation_id']) == item['itemVariationId']
+            ][0]
+        except ValueError:
+            invalid_variations = [x for x in variations
+                                  if (isinstance(x, str) and not x.isdigit())
+                                  or not isinstance(x, str)]
+            logging.error("Invalid variaition ID value within template "
+                          f"({invalid_variations})")
+            break
         if 'locations' not in template_variation.keys():
             continue
         kwargs = {}
