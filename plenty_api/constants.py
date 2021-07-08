@@ -128,7 +128,7 @@ VALID_ADDITIONAL_VALUES = {
         'variationClients', 'variationMarkets', 'variationDefaultCategory',
         'variationSuppliers', 'variationWarehouses', 'images', 'itemImages',
         'variationAttributeValues', 'variationSkus', 'variationAdditionalSkus',
-        'unit', 'parent', 'item', 'stock'
+        'unit', 'parent', 'item', 'stock', 'tags'
     ],
     'manufacturer': [
         'commisions', 'externals'

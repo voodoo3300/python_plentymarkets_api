@@ -191,7 +191,7 @@ id, itemId, flagOne, flagTwo, categoryId, isMain, isActive, barcode, referrerId,
 Use the **additional** field to add more values to the response, valid values are:  
 properties, variationProperties, variationBarcodes, variationBundleComponents, variationComponentBundles, variationSalesPrices, marketItemNumbers, variationCategories,
 variationClients, variationMarkets, variationDefaultCategory, variationSuppliers, variationWarehouses, images, itemImages, variationAttributeValues, variationSkus,
-variationAdditionalSkus, unit, parent, item, stock
+variationAdditionalSkus, unit, parent, item, stock, tags
 
 The **lang** field specifies the language of the texts used in the response. Valid values are country abbreviations in ISO-3166-1:  
 [List of countries](https://developers.plentymarkets.com/rest-doc/gettingstarted#countries)
