@@ -1114,7 +1114,7 @@ class PlentyApi():
 
         if book_out:
             initiate_order_date = utils.build_date_update_json(
-                date_type='initiate', date=datetime.datetime.now())
+                date_type='initiate', date=datetime.now())
             self.plenty_api_update_redistribution(order_id=response['id'],
                                                   json=initiate_order_date)
             self.plenty_api_create_booking(order_id=response['id'])
@@ -1126,7 +1126,7 @@ class PlentyApi():
             if book_out:
                 self.plenty_api_create_booking(order_id=response['id'])
                 finish_order_date = utils.build_date_update_json(
-                    date_type='finish', date=datetime.datetime.now())
+                    date_type='finish', date=datetime.now())
                 self.plenty_api_update_redistribution(order_id=response['id'],
                                                     json=finish_order_date)
 
