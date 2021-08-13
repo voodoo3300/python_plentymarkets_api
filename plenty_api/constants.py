@@ -34,7 +34,8 @@ VALID_DOMAINS = [
     'stockmanagement',
     'variation',
     'vat',
-    'warehouses'
+    'warehouses',
+    'property'
 ]
 VALID_ROUTES = [
     '/rest/items/attributes',
@@ -48,7 +49,8 @@ VALID_ROUTES = [
     '/rest/stockmanagement/stock',
     '/rest/items/variations',
     '/rest/vat',
-    '/rest/stockmanagement/warehouses'
+    '/rest/stockmanagement/warehouses',
+    '/rest/properties'
 ]
 DOMAIN_ROUTE_MAP = dict(zip(VALID_DOMAINS, VALID_ROUTES))
 
@@ -102,6 +104,9 @@ VALID_REFINE_KEYS = {
         'contactAddress', 'countryId', 'userId', 'referrerId', 'name',
         'nameOrId', 'town', 'privatePhone', 'billingAddressId',
         'deliveryAddressId', 'tagIds'
+    ],
+    'property': [
+        'propertyId'
     ]
 }
 

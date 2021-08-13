@@ -27,6 +27,8 @@ import simplejson
 import gnupg
 import logging
 import tqdm
+import pandas
+from collections import defaultdict
 from datetime import datetime, timezone
 
 import plenty_api.keyring
@@ -65,6 +67,8 @@ class PlentyApi():
         **plenty_api_get_variation_warehouses**
 
         **plenty_api_get_contacts**
+
+        **plenty_api_get_property_selections**
 
         POST REQUESTS
         **plenty_api_set_image_availability**
@@ -836,6 +840,47 @@ class PlentyApi():
             domain='contact',
             refine=refine,
             additional=additional)
+
+    def plenty_api_get_property_selections(self, refine: dict = None):
+        """
+        Get a mapping of selection IDs to the actual value in all available
+        languages.
+
+        Parameter:
+            refine      [dict]  -   Apply filters to the request
+                                    Example: {'propertyId': 123}
+
+        Return:
+                        [dict]  -   Mapping of all selection property values
+        """
+        domain='property',
+        path='/selections',
+
+        query = utils.sanity_check_parameter(
+            domain=domain, query=query, refine=refine,
+            additional=None, lang='')
+
+        data = self.__repeat_get_request_for_all_records(
+            domain=domain, path=path, query=query)
+
+        selection_map = defaultdict(lambda: defaultdict(dict))
+        for selection in data:
+            key = selection['propertyId']
+            value_id = selection['id']
+            for value in selection['relation']['relationValues']:
+                selection_map[key][value_id][value['lang']] = value['value']
+
+        df_data = []
+        if self.data_format == 'dataframe':
+            for property_id, selections in data.items():
+                for selection_id, languages in selections.items():
+                    for language, name in languages.items():
+                        df_data.append([property_id, selection_id, language,
+                                        name])
+            columns = ['property_id', 'selection_id', 'language', 'name']
+            return pandas.DataFrame(df_data, columns=columns)
+
+        return selection_map
 
 # POST REQUESTS
 
