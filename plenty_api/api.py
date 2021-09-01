@@ -91,6 +91,8 @@ class PlentyApi():
 
         **plenty_api_create_booking**
 
+        **plenty_api_create_property_selection_name**
+
         PUT REQUESTS
 
         **plenty_api_update_redistribution**
@@ -1233,6 +1235,35 @@ class PlentyApi():
                                              domain="order",
                                              path=path,
                                              data=data)
+        return response
+
+
+    def plenty_api_create_property_selection_name(self, property_id: int,
+                                                  lang: str, name: str) -> dict:
+        """
+        Create a name in a specific language for a selection property.
+
+        Parameter:
+            property_id     [int]   -   Plentymarkets property Id which a new
+                                        selection namm will be created for
+            lang            [str]   -   Initial language for selection creation
+            name            [str]   -   Value of the selection name
+
+        Return:
+                            [dict]  -   Return the response object, in case the
+                                        request fails return an error message
+        """
+        if not property_id or not lang or not name:
+            return [{'error': 'missing_parameter'}]
+
+        if utils.get_language(lang=lang) == 'INVALID_LANGUAGE':
+            return {'error': 'invalid_language'}
+
+        json = {'propertyId': property_id, 'lang': lang, 'name': name,}
+
+        path = "/selections/names"
+        response = self.__plenty_api_request(method="post", path=path,
+                                             domain="v2property", data=json)
         return response
 
 # PUT REQUESTS

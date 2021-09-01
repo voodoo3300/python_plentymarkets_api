@@ -35,7 +35,8 @@ VALID_DOMAINS = [
     'variation',
     'vat',
     'warehouses',
-    'property'
+    'property',
+    'v2property'
 ]
 VALID_ROUTES = [
     '/rest/items/attributes',
@@ -50,7 +51,8 @@ VALID_ROUTES = [
     '/rest/items/variations',
     '/rest/vat',
     '/rest/stockmanagement/warehouses',
-    '/rest/properties'
+    '/rest/properties',
+    '/rest/v2/properties'
 ]
 DOMAIN_ROUTE_MAP = dict(zip(VALID_DOMAINS, VALID_ROUTES))
 

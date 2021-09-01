@@ -33,6 +33,7 @@
         * [post attribute names](#post-attribute-names)
         * [post attribute values](#post-attribute-values)
         * [post attribute value names](#post-attribute-value-names)
+        * [post property selection name](#create-property-selection)
     + [Order related data](#post-order-section)
         * [post redistribution (move stock from one warehouse to another)](#post-redistribution)
         * [create transaction](#post-transaction)
@@ -580,6 +581,20 @@ Return a POST request JSON response, if one of the requests fails return the err
 If the **value_id** field is not filled the method will return: `{'error': 'missing_parameter'}`.
 In case the language within the `lang` field of the JSON is invalid the method will return `{'error': 'invalid_language'}`.
 
+#### plenty_api_create_property_selection_name <a name=create-property-selection></a>
+
+Create a new name for an existing property selection value for the given language.
+
+[*Required parameter*]:
+
+The **property_id** parameter contains the Plentymarkets ID of a property for which a new selection name value is being added, the **lang** parameter contains a two letter abbreviation of the target language (for a list of valid values look here: [Language codes](https://developers.plentymarkets.com/en-gb/developers/main/rest-api-guides/getting-started.html#_language_codes)), and the **name** parameter contains the visible name for the selection name in the given language.
+
+[*Output format*]:
+
+Return a POST request JSON response, if one of the requests fails return the error message.
+If the **property_id**, **lang** or **name** field is not filled the method will return: `{'error': 'missing_parameter'}`.
+In case the language within the `lang` field of the JSON is invalid the method will return `{'error': 'invalid_language'}`.
+
 #### Orders <a name='post-oders-section'></a>
 
 #### plenty_api_create_redistribution <a name='post-redistribution'></a>
@@ -772,6 +787,10 @@ This route is used to book in/out all pending transactions of an order.
 [*Required parameter*]:
 
 The booking is performed for the order specified by the **order_id** parameter, which contains the integer ID of the order assigned by Plentymarkets. The optional **delivery_note** parameter can contain a delivery note document's identifier, that should be connected to the booking.
+
+[*Output format*]:
+
+Return a POST request JSON response, if one of the requests fails return the error message.
 
 [*Output format*]:
 
