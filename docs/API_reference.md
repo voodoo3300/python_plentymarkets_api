@@ -44,6 +44,8 @@
     + [Stock related data](#put-stock-section)
         * [book incoming quanity](#book-incoming)
         * [book outgoing quanity](#book-outgoing)
+    + [Item related data](#put-item-section)
+        * [update property selection name](#update-property-selection)
 - [Extra features](#extras)
 
 ### LOGIN <a name='login'></a>
@@ -874,6 +876,22 @@ By specifying a storage location ID within **location_id**, you can target a spe
 [*Output format*]:
 
 Return a POST request JSON response, if one of the requests fails return the error message.
+
+#### Items <a name='put-item-section'></a>
+
+#### plenty_api_update_property_selection_name <a name=update-property-selection></a>
+
+Update a property selection name via its name ID.
+
+[*Required parameter*]:
+
+The **nameId** from Plentymarkets needs to be given in order to identify the property selection name that will be updated. The **name** parameter describes the new name value.
+Please refer to the [Plentymarkets Dev documentation: REST API PUT transaction](https://developers.plentymarkets.com/en-gb/plentymarkets-rest-api/index.html#/).
+
+[*Output format*]:
+
+Return a PUT request JSON response, if one of the requests fails return the error message.
+If the **name_id** or **name** field is not filled the method will return: `{'error': 'missing_parameter'}`.
 
 ### Extra features <a name=extras></a>
 

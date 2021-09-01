@@ -100,6 +100,8 @@ class PlentyApi():
         **plenty_api_book_incoming_items**
 
         **plenty_api_book_outgoing_items**
+
+        **plenty_api_update_property_selection_name**
     """
 
     def __init__(self, base_url: str, use_keyring: bool = True,
@@ -1429,4 +1431,24 @@ class PlentyApi():
         # TODO Error handling and introduce proper logging
         logging.debug(response)
 
+        return response
+
+    def plenty_api_update_property_selection_name(self, name_id: int,
+                                                  name: str) -> dict:
+        """
+        Update the property selection name for the given name Id.
+
+        Parameters:
+            name_id         [int]   -   Id of the name value that will be
+                                        changed
+            name            [str]   -   New name value
+        """
+        if not name_id or not name:
+            return {'error': 'missing_parameter'}
+
+        json = {'name': name}
+
+        path = f"/selections/names/{name_id}"
+        response = self.__plenty_api_request(method="put", path=path,
+                                             domain="v2property", data=json)
         return response
