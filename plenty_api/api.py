@@ -70,6 +70,8 @@ class PlentyApi():
 
         **plenty_api_get_property_selections**
 
+        **plenty_api_get_property_selection_names**
+
         POST REQUESTS
         **plenty_api_set_image_availability**
 
@@ -885,6 +887,22 @@ class PlentyApi():
             return pandas.DataFrame(df_data, columns=columns)
 
         return selection_map
+
+    def plenty_api_get_property_selection_names(self, selection_id: int):
+        """
+        Get all names for the specific selection Id.
+
+        Parameter:
+            selection_id        [int]   -   Selection Id which the names will
+                                            be rturned for
+
+        Return:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+        path = f"/selections/{selection_id}/names"
+        data = self.__plenty_api_generic_get(domain='v2property', path=path)
+
+        return data
 
 # POST REQUESTS
 

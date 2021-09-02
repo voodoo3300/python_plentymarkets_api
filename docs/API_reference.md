@@ -15,6 +15,7 @@
         * [get prices](#get-prices)
         * [get manufacturers](#get-manufacturers)
         * [get property selections](#get-property-selections)
+        * [get property selections names](#get-property-selections-names)
     + [Tax related data](#get-taxes-section)
         * [get vat id mappings](#get-vat-mappings)
     + [Stock related data](#get-stock-section)
@@ -296,6 +297,16 @@ There are currently two supported output formats: 'json' and 'dataframe'.
 The 'json' format returns a dictionary of property IDs to its available selection values
 example: ```{1: {11: {'de': 'value_1', 'en': 'value_2'}}, 2: {12: {'de': 'value_3', 'en': 'value_4'}}}```
 The 'dataframe' format transforms that data structure into a pandas DataFrame.
+
+##### plenty_api_get_property_selections_names: <a name='get-property-selections-names'></a>
+
+Get all names of a specific selection_id, with additional data such as the nameId, which is needed for updating selection names.
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
+The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
 
 ---
 ---
