@@ -859,11 +859,11 @@ class PlentyApi():
         Return:
                         [dict]  -   Mapping of all selection property values
         """
-        domain='property',
-        path='/selections',
+        domain = 'property'
+        path = '/selections'
 
         query = utils.sanity_check_parameter(
-            domain=domain, query=query, refine=refine,
+            domain=domain, query=None, refine=refine,
             additional=None, lang='')
 
         data = self.__repeat_get_request_for_all_records(
@@ -1279,7 +1279,7 @@ class PlentyApi():
         if utils.get_language(lang=lang) == 'INVALID_LANGUAGE':
             return {'error': 'invalid_language'}
 
-        json = {'propertyId': property_id, 'lang': lang, 'name': name,}
+        json = {'propertyId': property_id, 'lang': lang, 'name': name}
 
         path = "/selections/names"
         response = self.__plenty_api_request(method="post", path=path,
