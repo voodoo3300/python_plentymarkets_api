@@ -896,8 +896,10 @@ Update a property selection name via its name ID.
 
 [*Required parameter*]:
 
-The **nameId** from Plentymarkets needs to be given in order to identify the property selection name that will be updated. The **name** parameter describes the new name value.
+The **name_id** from Plentymarkets needs to be given in order to identify the property selection name that will be updated. The **name** parameter describes the new name value.
 Please refer to the [Plentymarkets Dev documentation: REST API PUT transaction](https://developers.plentymarkets.com/en-gb/plentymarkets-rest-api/index.html#/).
+
+**NOTE:** To get the name ID from PlentyMarkets use the function ```plenty_api_get_property_selection_names``` where the ```id``` of each entry represents the name ID of the selection feature in that language.
 
 [*Output format*]:
 
