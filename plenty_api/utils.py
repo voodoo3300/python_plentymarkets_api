@@ -417,19 +417,26 @@ def build_date_update_json(date_type: str, date: datetime.datetime) -> dict:
     return json
 
 
-def build_redistribution_json(template: dict) -> dict:
+def build_import_json(template: dict, sender_type: str) -> dict:
     """
-    Create a valid JSON for a redistribution POST request.
+    Create a valid JSON for a redistribution/reorder POST request.
 
-    Used for the [POST /rest/redistributions route]
+    Used for:
+        [POST /rest/redistributions route]
+        [POST /rest/reorders route]
 
     Parameters:
         template            [dict]  -   Required and/or optional elements for
-                                        the redistribution creation
+                                        the JSON creation
+        sender_type         [str]   -   Declare if the source is either a
+                                        warehouse or a contact.
 
     Return:
                             [dict]  -   valid JSON for the request
     """
+    if sender_type not in ['warehouse', 'contact']:
+        raise RuntimeError(f"Invalid sender_type parameter: {sender_type}.")
+
     variations = [
         {
             'typeId': 1,
@@ -465,7 +472,7 @@ def build_redistribution_json(template: dict) -> dict:
         'orderItems': variations,
         'relations': [
             {
-                'referenceType': 'warehouse',
+                'referenceType': sender_type,
                 'referenceId': template['sender'],
                 'relation': 'sender'
             },
@@ -478,7 +485,6 @@ def build_redistribution_json(template: dict) -> dict:
     }
 
     return json
-
 
 
 def build_transaction(order_item_id: int, location: dict,

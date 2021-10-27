@@ -1166,8 +1166,8 @@ class PlentyApi():
         if not utils.validate_redistribution_template(template=template):
             return {'error': 'invalid_template'}
 
-        redistribution_json = utils.build_redistribution_json(
-            template=template)
+        redistribution_json = utils.build_import_json(
+            template=template, sender_type='warehouse')
         response = self.__plenty_api_request(method="post",
                                              domain="redistribution",
                                              data=redistribution_json)
