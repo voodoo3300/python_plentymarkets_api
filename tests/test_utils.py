@@ -24,7 +24,7 @@ def sample_date_ranges() -> list:
         {'start': '2019-09-16T08:00:00+02:00',  # Past date => CORRECT
          'end': '2019-10-13T08:00:00+02:00'},
         {'start': '2021-09-16T08:00:00+02:00',  # Future date => FAIL
-         'end': '2021-10-13T08:00:00+02:00'}
+         'end': '8021-10-13T08:00:00+02:00'}
     ]
     return samples
 
@@ -366,7 +366,6 @@ def sample_variation_data() -> list:
 
 
 @pytest.fixture
-<<<<<<< HEAD
 def sample_orders() -> list:
     orders = [
         # Valid order

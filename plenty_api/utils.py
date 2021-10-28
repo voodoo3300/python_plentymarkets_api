@@ -519,14 +519,14 @@ def build_transaction(order_item_id: int, location: dict,
     return json
 
 
-def build_transactions(order: dict, variations: dict,
-                       user_id: int = -1) -> list:
+def build_transactions(order: dict, variations: list,
+                       user_id: int = -1) -> tuple:
     """
     Create transaction JSONs for each order item in the redistribution.
 
     Parameters:
         order           [dict]  -   Response JSON from the order creation
-        variations      [list]  -   Variations with warehouse location to book
+        variations      [list]  -   Variations with warehouse locations to book
                                     stock from
         user_id         [int]   -   OPTIONAL: ID of the user that is
                                     responsible for the booking

@@ -1188,14 +1188,14 @@ class PlentyApi():
 
         if incoming:
             for transaction in incoming:
-                transaction_response = self.plenty_api_create_transaction(
+                self.plenty_api_create_transaction(
                     order_item_id=transaction['orderItemId'], json=transaction)
             if book_out:
                 self.plenty_api_create_booking(order_id=response['id'])
                 finish_order_date = utils.build_date_update_json(
                     date_type='finish', date=datetime.now())
                 self.plenty_api_update_redistribution(order_id=response['id'],
-                                                    json=finish_order_date)
+                                                      json=finish_order_date)
 
         return response
 
