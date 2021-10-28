@@ -487,6 +487,15 @@ def build_import_json(template: dict, sender_type: str) -> dict:
     return json
 
 
+def fetch_additional_keys(data: dict) -> dict:
+    """ Get a subset of the given dictionary """
+    result = {}
+    for extra_key in ['batch', 'bestBeforeDate', 'identification']:
+        if extra_key in data:
+            result.update({extra_key: data[extra_key]})
+    return result
+
+
 def build_transaction(order_item_id: int, location: dict,
                       direction: str = 'out', user_id: int = -1,
                       **kwargs) -> dict:
@@ -517,10 +526,7 @@ def build_transaction(order_item_id: int, location: dict,
     }
     if user_id > 0:
         json['userId'] = user_id
-
-    for extra_key in ['batch', 'bestBeforeDate', 'identification']:
-        if extra_key in kwargs.keys():
-            json[extra_key] = kwargs[extra_key]
+    json.update(kwargs)
 
     return json
 
@@ -588,11 +594,7 @@ def build_redistribution_transactions(order: dict, variations: list,
     ):
         if 'locations' not in variation.keys():
             continue
-        kwargs = {}
-        for extra_key in ['batch', 'bestBeforeDate', 'identification']:
-            if extra_key not in variation.keys():
-                continue
-            kwargs[extra_key] = variation[extra_key]
+        kwargs = fetch_additional_keys(data=variation)
 
         for location in variation['locations']:
             outgoing.append(
