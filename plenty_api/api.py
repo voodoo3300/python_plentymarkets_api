@@ -1172,7 +1172,7 @@ class PlentyApi():
                                              domain="redistribution",
                                              data=redistribution_json)
 
-        (outgoing, incoming) = utils.build_transactions(
+        (outgoing, incoming) = utils.build_redistribution_transactions(
             order=response, variations=template['variations'])
 
         if outgoing:

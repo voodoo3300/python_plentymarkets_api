@@ -7,7 +7,7 @@ from plenty_api.utils import (
     get_utc_offset, build_query_date, create_vat_mapping, date_to_timestamp,
     get_language, shrink_price_configuration, sanity_check_parameter,
     attribute_variation_mapping, list_contains, json_field_filled,
-    build_transactions, validate_redistribution_template
+    build_redistribution_transactions, validate_redistribution_template
 )
 
 
@@ -489,6 +489,7 @@ def sample_orders() -> list:
     return orders
 
 
+@pytest.fixture
 def sample_redistribution():
     order = {
         "id": 1,
@@ -977,11 +978,11 @@ def test_json_field_filled():
     assert expected == result
 
 
-def describe_build_transactions():
+def describe_build_redistribution_transactions():
     def with_no_outgoing_or_incoming_transaction(
             sample_redistribution: dict,
             sample_redistribution_without_transactions: list):
-        result = build_transactions(
+        result = build_redistribution_transactions(
             order=sample_redistribution,
             variations=sample_redistribution_without_transactions)
 
@@ -1008,7 +1009,7 @@ def describe_build_transactions():
             []
         )
 
-        result = build_transactions(
+        result = build_redistribution_transactions(
             order=sample_redistribution,
             variations=sample_redistribution_with_outgoing_transactions)
 
@@ -1052,7 +1053,7 @@ def describe_build_transactions():
             ]
         )
 
-        result = build_transactions(
+        result = build_redistribution_transactions(
             order=sample_redistribution,
             variations=sample_redistribution_with_both_transactions)
 
@@ -1085,7 +1086,7 @@ def describe_build_transactions():
             []
         )
 
-        result = build_transactions(
+        result = build_redistribution_transactions(
             order=sample_redistribution,
             variations=sample_redistribution_with_extra_attributes)
 

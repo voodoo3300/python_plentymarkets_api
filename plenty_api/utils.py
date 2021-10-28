@@ -525,8 +525,48 @@ def build_transaction(order_item_id: int, location: dict,
     return json
 
 
-def build_transactions(order: dict, variations: list,
-                       user_id: int = -1) -> tuple:
+def iterate_template_order_matches(order_items: list,
+                                   template_variations: list) -> tuple:
+    """
+    Iterate upon the template and the order response and combine them.
+
+    Parameter:
+        order_items         [list]      -   List of order items from the
+                                            response containing the assigned ID
+                                            from Plentymarkets
+        template_variations [list]      -   List of variations from import
+                                            creation template.
+
+    Return:
+                            [dict]      -   Combination of both response and
+                                            template elements for each
+                                            variation
+    """
+    for variation in template_variations:
+        try:
+            item = [
+                x for x in order_items
+                if x['itemVariationId'] == int(variation['variation_id'])
+            ][0]
+        except IndexError as err:
+            raise RuntimeError(
+                f"Variation {item['itemVariationId']} found in the template, "
+                "but not in the REST API response."
+            ) from err
+        except ValueError as err:
+            invalid_variations = [x for x in template_variations
+                                  if (isinstance(x, str) and not x.isdigit())
+                                  or not isinstance(x, str)]
+            raise RuntimeError(
+                "Invalid variation ID value found within the template "
+                f"({invalid_variations})"
+            ) from err
+        variation['order_item_id'] = item['id']
+        yield variation
+
+
+def build_redistribution_transactions(order: dict, variations: list,
+                                      user_id: int = -1) -> tuple:
     """
     Create transaction JSONs for each order item in the redistribution.
 
@@ -543,42 +583,32 @@ def build_transactions(order: dict, variations: list,
     """
     outgoing = []
     incoming = []
-    for item in order['orderItems']:
-        try:
-            template_variation = [
-                x for x in variations
-                if int(x['variation_id']) == item['itemVariationId']
-            ][0]
-        except ValueError:
-            invalid_variations = [x for x in variations
-                                  if (isinstance(x, str) and not x.isdigit())
-                                  or not isinstance(x, str)]
-            logging.error("Invalid variation ID value within template "
-                          f"({invalid_variations})")
-            break
-        if 'locations' not in template_variation.keys():
+    for variation in iterate_template_order_matches(
+        order_items=order['orderItems'], template_variations=variations
+    ):
+        if 'locations' not in variation.keys():
             continue
         kwargs = {}
         for extra_key in ['batch', 'bestBeforeDate', 'identification']:
-            if not extra_key in template_variation.keys():
+            if extra_key not in variation.keys():
                 continue
-            kwargs[extra_key] = template_variation[extra_key]
+            kwargs[extra_key] = variation[extra_key]
 
-        for location in template_variation['locations']:
+        for location in variation['locations']:
             outgoing.append(
-                build_transaction(order_item_id=item['id'], location=location,
-                                  direction='out', user_id=user_id,
-                                  **kwargs)
+                build_transaction(order_item_id=variation['order_item_id'],
+                                  location=location, direction='out',
+                                  user_id=user_id, **kwargs)
             )
             if 'targets' in location.keys():
                 for target in location['targets']:
                     incoming.append(
                         build_transaction(
-                            order_item_id=item['id'], location=target,
-                            direction='in', user_id=user_id, **kwargs)
+                            order_item_id=variation['order_item_id'],
+                            location=target, direction='in',
+                            user_id=user_id, **kwargs)
                     )
     return (outgoing, incoming)
-
 
 
 def json_to_dataframe(json):
