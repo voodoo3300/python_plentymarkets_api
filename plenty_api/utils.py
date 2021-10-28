@@ -547,7 +547,7 @@ def build_transactions(order: dict, variations: list,
             invalid_variations = [x for x in variations
                                   if (isinstance(x, str) and not x.isdigit())
                                   or not isinstance(x, str)]
-            logging.error("Invalid variaition ID value within template "
+            logging.error("Invalid variation ID value within template "
                           f"({invalid_variations})")
             break
         if 'locations' not in template_variation.keys():
