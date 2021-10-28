@@ -37,6 +37,7 @@
         * [post property selection name](#create-property-selection)
     + [Order related data](#post-order-section)
         * [post redistribution (move stock from one warehouse to another)](#post-redistribution)
+        * [post reorder (refill stock within a warehouse)](#post-reorder)
         * [create transaction](#post-transaction)
         * [create booking](#post-booking)
 - [PUT-Requests](#put-requests)
@@ -763,6 +764,51 @@ Book out any outgoing transactions and if they exist also the incoming transacti
 
 Return a POST request JSON response, if one of the requests fails return the error message.
 When the **template** object cannot be validated, the method will return: `{'error': 'invalid_template'}`.
+
+#### plenty_api_create_reorder <a name='post-reorder'></a>
+
+[*Required parameter*]:
+
+The **template** parameter contains a simplified version of the JSON required for the creation of a reorder, it contains information about the sender, receiver, the target plenty system and the variations. Optionally, the user can add location IDs to create incoming transactions automatically.
+Please refer to the [Plentymarkets Dev Documnetation: REST API POST reorder](https://developers.plentymarkets.com/en-gb/plentymarkets-rest-api/index.html#/Order/post_rest_reorders)
+
+[*Example*]:
+
+Here is an example of a template for a reorder:
+Required elements are: `plenty_id`, `sender`, `receiver`, and at least one variation in `variations`.
+For `variations`, the required elements are `variation_id` and `total_quantity`.
+For `locations` the required elements are `location_id` and `quantity`.
+
+Without `locations` the reorder will only contain a listing of items, each transaction has to be created manually.
+
+```json
+{
+    'plenty_id': 12345,
+    'sender': 1234,
+    'receiver': 111,
+    'variations': [
+        {
+            'variation_id': 1234,
+            'total_quantity': 2,
+            'name': 'Awesome_test with incoming',
+            'amounts': 10,
+            'locations': [
+                {'location_id': 1234, 'quantity': 2}
+            ]
+        },
+        {
+            'variation_id': 2345,
+            'total_quantity': 1,
+            'name': 'Awesome_test without incoming',
+            'amounts': 10
+        }
+    ]
+}
+```
+
+[*Output format*]:
+
+Return a POST request JSON response, if one of the requests fails return the error message.
 
 #### plenty_api_create_transaction <a name=post-transaction></a>
 

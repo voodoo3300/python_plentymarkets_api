@@ -89,6 +89,8 @@ class PlentyApi():
 
         **plenty_api_create_redistribution**
 
+        **plenty_api_create_reorder**
+
         **plenty_api_create_transaction**
 
         **plenty_api_create_booking**
@@ -1200,6 +1202,39 @@ class PlentyApi():
                     date_type='finish', date=datetime.now())
                 self.plenty_api_update_redistribution(order_id=response['id'],
                                                       json=finish_order_date)
+
+        return response
+
+    def plenty_api_create_reorder(self, template):
+        """
+        Create a new reorder on Plentymarkets.
+
+        This process is quite similar to the redistribution creation process,
+        differences are that a reorder source is a contact instead of a
+        warehouse and there are no outgoing transactions.
+
+        Skip the automatic booking step for now as it doesn't seem to be useful
+        for now.
+
+        Parameter:
+            template    [dict]  -   Describes the transactions between the
+                                    sender contact and the receiver warehouse
+
+        Return:
+                        [dict]
+        """
+        reorder_json = utils.build_import_json(
+            template=template, sender_type='contact')
+        response = self.__plenty_api_request(method="post",
+                                             domain="reorder",
+                                             data=reorder_json)
+
+        incoming = utils.build_reorder_transaction(
+            order=response, variations=template['variations'])
+        if incoming:
+            for transaction in incoming:
+                self.plenty_api_create_transaction(
+                    order_item_id=transaction['orderItemId'], json=transaction)
 
         return response
 

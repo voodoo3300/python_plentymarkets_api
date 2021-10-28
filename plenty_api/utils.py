@@ -613,6 +613,40 @@ def build_redistribution_transactions(order: dict, variations: list,
     return (outgoing, incoming)
 
 
+def build_reorder_transaction(order: dict, variations: dict,
+                              user_id: int = -1) -> list:
+    """
+    Create transaction JSONs for each order item with a location in the
+    reorder.
+
+    Parameters:
+        order           [dict]  -   Response JSON from the order creation
+        variations      [list]  -   Variations with warehouse locations to book
+                                    in the stock
+        user_id         [int]   -   OPTIONAL: ID of the user that is
+                                    responsible for the booking
+
+    Return:
+                        [list]  -   List of transaction JSONs for incoming
+                                    transactions
+    """
+    incoming = []
+    for variation in iterate_template_order_matches(
+        order_items=order['orderItems'], template_variations=variations
+    ):
+        if 'locations' not in variation.keys():
+            continue
+        kwargs = fetch_additional_keys(data=variation)
+
+        for location in variation['locations']:
+            incoming.append(
+                build_transaction(order_item_id=variation['order_item_id'],
+                                  location=location, direction='out',
+                                  user_id=user_id, **kwargs)
+            )
+    return incoming
+
+
 def json_to_dataframe(json):
     """ simple wrapper for the data conversion from JSON dict to dataframe """
     return pandas.json_normalize(json)
