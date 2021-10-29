@@ -634,13 +634,13 @@ class PlentyApi():
         """
         Get a list of order referrers from PlentyMarkets.
 
-        The description within the PlentyMarkets API documentation is just
-        wrong, the parameter doesn't expect an integer nor a list of integers,
-        it actually cannot query multiple columns.
-        All the parameter can query is a "single" column, which is why I
-        renamed the parameter in this method.
+        Even though the documentation claims that `columns` can work with an
+        array of strings, it actually cannot query a subset of columns, as it
+        will only use the last member of the array.
+        To get all of the columns, leave @column empty.
 
         Parameter:
+            OPTIONAL
             column      [str]   -   Name of the field from the referrer to be
                                     exported.
 
@@ -651,18 +651,17 @@ class PlentyApi():
         # because all other attributes are useless without identification
         valid_columns = ['backendName', 'id', 'isEditable', 'isFilterable',
                          'name', 'orderOwnderId', 'origin']
-        referrers = None
         query = {}
-        if column in valid_columns:
-            query = {'columns': column}
-        else:
+        if column and column not in valid_columns:
             logging.warning(f"Invalid column argument removed: {column}")
+        elif column and column in valid_columns:
+            query = {'columns': column}
 
         # This request doesn't export in form of pages
         referrers = self.__plenty_api_request(method='get',
                                               domain='referrer',
                                               query=query)
-        if 'error' in referrers.keys():
+        if 'error' in {key for referrer in referrers for key in referrer}:
             logging.error(f"GET referrers failed with:\n{referrers}")
             return None
 
