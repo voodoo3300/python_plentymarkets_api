@@ -29,7 +29,7 @@ import logging
 import tqdm
 import pandas
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, timedelta
 
 import plenty_api.keyring
 import plenty_api.utils as utils
@@ -397,8 +397,9 @@ class PlentyApi():
         return utils.transform_data_type(
             data=data, data_format=self.data_format)
 
-    def plenty_api_get_orders_by_date(self, start, end, date_type='create',
-                                      additional=None, refine=None):
+    def plenty_api_get_orders_by_date(self, start: str = '', end: str = '',
+                                      date_type='creation', additional=None,
+                                      refine=None):
         """
         Get all orders within a specific date range.
 
@@ -420,7 +421,10 @@ class PlentyApi():
         Return:
                         [JSON(Dict) / DataFrame] <= self.data_format
         """
-
+        if not start:
+            start = (date.today() - timedelta(days=1)).isoformat()
+        if not end:
+            end = date.today().isoformat()
         date_range = utils.build_date_range(start=start, end=end)
         if not date_range:
             logging.error(f"Invalid range {start} -> {end}")

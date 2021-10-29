@@ -105,18 +105,17 @@ the password again).
 
 ##### plenty_api_get_orders_by_date: <a name='get-orders-by-date'></a>
 
-[*Required parameter*]:
+By default, the *start* date is set to **yesterday** and the *end* date is set to **today**. You can adjust the date range by providing a string representation in one of the following formats for either both or one of these parameters.
 
-Fetch orders within a specified range of two dates, there are 4 different types of date-types:
-- Creation [date and time when the order was created on PlentyMarkets]
-- Change   [date and time of the last change, within the order]
-- Payment  [date and time when the payment was either automatically received by the order or assigned to the order]
-- Delivery [date and time of the removal of products from the stock of the shipping warehouse]
-
-The dates are accepted in the following formats:
 - YEAR-MONTH-DAY                                    (2020-09-16)        [ISO 8601 date format]
 - YEAR-MONTH-DAYTHOUR:MINUTE                        (2020-09-16T08:00)
 - YEAR-MONTH-DAYTHOUR:MINUTE:SECOND+UTC-OFFSET      (2020-09-16T08:00)  [W3C date format]
+
+The default `date_type` is **creation**, but you can set it to any of the following 4 types:
+- **creation** [date and time when the order was created on PlentyMarkets]
+- **change**   [date and time of the last change, within the order]
+- **payment**  [date and time when the payment was either automatically received by the order or assigned to the order]
+- **delivery** [date and time of the removal of products from the stock of the shipping warehouse]
 
 [*Optional parameter*]:
 
