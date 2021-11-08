@@ -67,8 +67,13 @@ ORDER_DATE_ARGUMENTS = {
     'delivery': 'outgoingItemsBooked'
 }
 
+ORDER_TYPES = {
+    'reorder': 12,
+    'redistribution': 15
+}
+
 # Redistribution event date types
-REDISTRIBUTION_DATE_TYPES = {
+IMPORT_ORDER_DATE_TYPES = {
     'initiate': 16,
     'estimate_delivery': 11,
     'finish': 17

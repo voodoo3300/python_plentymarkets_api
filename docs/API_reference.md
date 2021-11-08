@@ -139,6 +139,23 @@ The 'dataframe' format transforms that data structure into a pandas DataFrame, w
 
 ---
 
+##### plenty_api_get_pending_reorders: <a name='get-pending-reorders'></a>
+
+Pull all reorders that have not been closed.
+
+[*Optional parameter*]:
+
+The **sender** parameter takes the ID of a contact in Plentymarkets, which in the case of a reorder should be a producer/supplier.
+The **receiver** parameter takes the ID of a warehouse in Plentymarkets.
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
+The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
+---
+
 ##### plenty_api_get_referrers: <a name='get-referrers'></a>
 
 Fetch all referrers from PlentyMarkets, they contain the following attributes:

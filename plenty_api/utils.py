@@ -397,7 +397,7 @@ def build_date_update_json(date_type: str, date: datetime.datetime) -> dict:
     Return:
                         [dict]      -   valid JSON for the request
     """
-    if date_type not in constants.REDISTRIBUTION_DATE_TYPES.keys():
+    if date_type not in constants.IMPORT_ORDER_DATE_TYPES.keys():
         logging.error(f"Invalid date type {date_type} for a redistribution")
         return {}
 
@@ -409,7 +409,7 @@ def build_date_update_json(date_type: str, date: datetime.datetime) -> dict:
     json = {
         'dates': [
             {
-                'typeId': constants.REDISTRIBUTION_DATE_TYPES[date_type],
+                'typeId': constants.IMPORT_ORDER_DATE_TYPES[date_type],
                 'date': date_str
             }
         ]

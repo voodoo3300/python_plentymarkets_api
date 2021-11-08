@@ -33,6 +33,7 @@ from datetime import datetime, timezone, date, timedelta
 
 import plenty_api.keyring
 import plenty_api.utils as utils
+from plenty_api.constants import IMPORT_ORDER_DATE_TYPES, ORDER_TYPES
 
 
 class PlentyApi():
@@ -398,6 +399,50 @@ class PlentyApi():
 
         return utils.transform_data_type(
             data=data, data_format=self.data_format)
+
+    def plenty_api_get_pending_reorders(self, sender: int = 0,
+                                        receiver: int = 0) -> list:
+        """
+        Get all reorders that have not been finished yet.
+        Parameters:
+        OPTIONAL
+            sender          [int]       -   Plentymarkets ID of the sender
+                                            contact
+            receiver        [int]       -   Plentymarkets ID of the receiver
+                                            warehouse
+
+        Return:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+        refine = {'orderType': ORDER_TYPES['reorder']}
+        if sender:
+            refine.update({'sender.contact': sender})
+        if receiver:
+            refine.update({'receiver.warehouse': receiver})
+        additional = ['orderItems.transactions']
+        query = utils.sanity_check_parameter(domain='order',
+                                             query=None,
+                                             refine=refine,
+                                             additional=additional)
+
+        orders = self.__repeat_get_request_for_all_records(domain='orders',
+                                                           query=query)
+        if isinstance(orders, dict) and 'error' in orders.keys():
+            logging.error(f"GET orders by date failed with:\n{orders}")
+            return None
+
+        pending_list = []
+        for order in orders:
+            finished = False
+            for event_date in order['dates']:
+                if event_date['typeId'] == IMPORT_ORDER_DATE_TYPES['finish']:
+                    finished = True
+            if not finished:
+                pending_list.append(order)
+        orders = utils.transform_data_type(data=pending_list,
+                                           data_format=self.data_format)
+
+        return orders
 
     def plenty_api_get_orders_by_date(self, start: str = '', end: str = '',
                                       date_type='creation', additional=None,
