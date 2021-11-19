@@ -52,14 +52,18 @@
 
 ### LOGIN <a name='login'></a>
 
-The login request is sent automatically, as soon as the object is instantiated. There are three methods of providing credentials.
+The login request is sent automatically, as soon as the object is instantiated. There are five methods of providing credentials.
 
-1. Providing them over STDIN [Usually only useful for testing on someone else's machine]
-    + Activated by creating the `PlentyApi` object, with the option `use_keyring=False`
-2. Enter the credentials once per STDIN and save them into a keyring [Very convenient for commands that are started manually doesn't work for cronjobs]
-    + Activated by creating the `PlentyApi` object, with the option `use_keyring=True` (True is the default)
-3. Provide the username as an argument and a path to a GPG encrypted file for the password [Works for cronjobs and manual running]
-    + Activated by creating the `PlentyApi` object with the arguments, `username={REST-API username}` and `password={path to GPG encrypted file containing the REST-API password}`
+1. **direct**: Providing them over STDIN *[Usually only useful for testing on someone else's machine]* <br>
+    `login_method = 'direct'`, `login_data = None` (empty by default)
+2. **keyring**: Enter the credentials once per STDIN and save them into a keyring *[Very convenient for commands that are started manually doesn't work for cronjobs]* <br>
+    `login_method = 'keyring'`, `login_data = None` (empty by default)
+3. **plain_text**: Provide the username and the password as arguments *[Highly discouraged in combination with storing the passwords in plain text files or even worse in the code]* <br>
+    `login_method = 'plain_text'`, `login_data = {'user': 'example_user', 'password': '1234abcd'}`
+4. **gpg_encrypted**: Provide the username as an argument and a path to a GPG encrypted file for the password *[Works for cronjobs and manual running]* <br>
+    `login_method = 'gpg_encrypted'`, `login_data = {'user': 'example_user', 'file_path': '/path/to/encrypted_file.gpg'}`
+
+**WARNING**: The logging module activated by the **debug option** of the `PlentySync` object, **will print your username and password** into the log as part of the response body.
 
 #### Example for a GPG encrypted file workflow (on Linux) <a name='gpg_workflow'></a>
 
@@ -81,8 +85,9 @@ Within python:
 ```
 api = plenty_api.PlentyApi(
         base_url='https://company.plentymarkets-cloud01.com',
-        username='api_user',
-        password='/home/user/pw.txt.gpg')
+        login_method='gpg_encrypted',
+        login_data={'user': 'api_user', 'file_path': '/home/user/pw.txt.gpg'}
+    )
 ```
 
 This will try to access your gpg key through your gpg agent, which manages

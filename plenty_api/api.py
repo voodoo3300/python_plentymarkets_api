@@ -109,9 +109,9 @@ class PlentyApi():
         **plenty_api_update_property_selection_name**
     """
 
-    def __init__(self, base_url: str, use_keyring: bool = True,
-                 data_format: str = 'json', debug: bool = False,
-                 username: str = '', password: str = '', use_gpg: bool = True):
+    def __init__(self, base_url: str, login_method: str = 'keyring',
+                 login_data: dict = None, data_format: str = 'json',
+                 debug: bool = False):
         """
         Initialize the object and directly authenticate to the API to get
         the bearer token.
@@ -120,18 +120,15 @@ class PlentyApi():
             base_url    [str]   -   Base URL to the PlentyMarkets API
                                     Endpoint, format:
                                     [https://{name}.plentymarkets-cloud01.com]
-            use_keyring [bool]  -   Save the credentials temporarily or
-                                    permanently
+        OPTIONAL
+            login_method[str]   -   Choose the login method from a variety of
+                                    options:
+                                        [keyring, direct, gpg_encrypted,
+                                         plain_text]
+            login_data  [dict]  -   Elements for the specific login method
             data_format [str]   -   Output format of the response
             debug       [bool]  -   Print out additional information about the
                                     request URL and parameters
-            username    [str]   -   skip the keyring and directly enter the
-                                    username to the REST-API
-            password    [str]   -   password string or path to a gpg-encrypted
-                                    file that contains the key
-            use_gpg     [bool]  -   Indicates if @password is a password
-                                    string(False) or a file path to a
-                                    gpg encrypted file containing the password
         """
         self.url = base_url
         self.keyring = plenty_api.keyring.CredentialManager()
@@ -142,72 +139,79 @@ class PlentyApi():
             self.data_format = 'json'
         self.creds = {'Authorization': ''}
         logged_in = self.__authenticate(
-            persistent=use_keyring, user=username, pw=password, use_gpg=use_gpg)
+            login_method=login_method, login_data=login_data)
         if not logged_in:
             raise RuntimeError('Authentication failed')
 
         self.cli_progress_bar = False
 
-    def __authenticate(self, persistent: bool, user: str, pw: str,
-                       use_gpg: bool) -> bool:
+    def __authenticate(self, login_method: str, login_data: dict) -> bool:
         """
         Get the bearer token from the PlentyMarkets API.
-        There are three possible methods:
-            + Enter once and keep the username and the password
-                within a keyring
-                [persistent TRUE & (user FALSE or pw FALSE)]
+        There are four possible methods:
+            + Enter credentials once and keep the username and the password
+              within a keyring ('keyring')
 
-            + Enter the username and password directly
-                [persistent FALSE & (user FALSE or pw FALSE)]
+            + Enter the username and password directly ('direct')
 
             + Provide username as an argument and get the password
-                from a GnuPG encrypted file at a specified path.
-                [user TRUE and pw TRUE and use_gpg TRUE]
+              from a GnuPG encrypted file at a specified path.
+              ('gpg_encrypted')
 
-            + Provide username and the password as arguments
-                [user TRUE and pw TRUE an use_gpg FALSE]
+            + Provide username and the password as arguments ('plain_text')
+
 
         Parameter:
-            persistent  [bool]  -   Permanent or temporary credential storage
-            user        [str]   -   skip the keyring and directly enter the
-                                    username to the REST-API
-            pw          [str]   -   path to a gpg-encrypted file that contains
-                                    the key.
-            use_gpg     [bool]  -   Indicates if @pw is a password
-                                    string(False) or a file path to a
-                                    gpg encrypted file containing the password
+            login_method    [str]       -   Name of the login method
+            login_data      [dict]      -   Elements of the specific login
+                                            method
 
         Return:
                         [bool]
         """
-
+        if login_method not in ['keyring', 'direct', 'gpg_encrypted',
+                                'plain_text']:
+            raise utils.InvalidLoginAttempt(
+                reason=f"invalid login method {login_method}")
         token = ''
         decrypt_pw = None
 
-        if persistent and not (user and pw):
+        if login_method == 'keyring':
             creds = self.keyring.get_credentials()
             if not creds:
                 creds = utils.new_keyring_creds(keyring=self.keyring)
-        elif not persistent and not (user and pw):
+        elif login_method == 'direct':
             creds = utils.get_temp_creds()
-        elif user and pw:
-            if use_gpg:
-                gpg = gnupg.GPG()
-                try:
-                    with open(pw, 'rb') as pw_file:
-                        decrypt_pw = gpg.decrypt_file(pw_file)
-                except FileNotFoundError as err:
-                    logging.error("Login to API failed: Provided gpg file is not "
-                                  f"valid\n=> {err}")
-                    return False
-                if not decrypt_pw:
-                    logging.error("Login to API failed: Decryption of password"
-                                  " file failed.")
-                    return False
-                password = decrypt_pw.data.decode('utf-8').strip('\n')
-                creds = {'username': user, 'password': password}
-            else:
-                creds = {'username': user, 'password': pw}
+        elif login_method == 'plain_text':
+            if not all(key in login_data for key in ['user', 'password']):
+                raise utils.InvalidLoginAttempt(
+                    reason="Missing login data for the `plain_text` login "
+                    "method, user and password required as keys in the "
+                    "`login_data` dictionary."
+                )
+            creds = {'username': login_data['user'],
+                     'password': login_data['password']}
+        elif login_method == 'gpg_encrypted':
+            if not all(key in login_data for key in ['user', 'file_path']):
+                raise utils.InvalidLoginAttempt(
+                    reason="Missing login data for the `gpg_encrypted` "
+                    "login method, user and file_path required as keys in the"
+                    " `login_data` dictionary."
+                )
+            gpg = gnupg.GPG()
+            try:
+                with open(login_data['file_path'], 'rb') as pw_file:
+                    decrypt_pw = gpg.decrypt_file(pw_file)
+            except FileNotFoundError as err:
+                logging.error("Login to API failed: Provided gpg file is not "
+                              f"valid\n=> {err}")
+                return False
+            if not decrypt_pw:
+                logging.error("Login to API failed: Decryption of password"
+                              " file failed.")
+                return False
+            password = decrypt_pw.data.decode('utf-8').strip('\n')
+            creds = {'username': login_data['user'], 'password': password}
 
         endpoint = self.url + '/rest/login'
         response = requests.post(endpoint, params=creds)
@@ -220,8 +224,10 @@ class PlentyApi():
             token = utils.build_login_token(response_json=response.json())
         except KeyError:
             try:
-                if response.json()['error'] == 'invalid_credentials' and \
-                        persistent:
+                if (
+                    response.json()['error'] == 'invalid_credentials'
+                    and login_data == 'keyring'
+                ):
                     logging.error(
                         "Wrong credentials: Please enter valid credentials."
                     )

@@ -30,6 +30,16 @@ import logging
 import plenty_api.constants as constants
 
 
+class InvalidLoginAttempt(Exception):
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__()
+
+    def __str__(self):
+        return str("Login to the Plentymarkets REST API failed, Reason: "
+                   f"{self.reason}")
+
+
 def create_vat_mapping(data: list, subset: list = None) -> dict:
     """
     Create a mapping of each country ID to (Tax ID and configuration ID),
