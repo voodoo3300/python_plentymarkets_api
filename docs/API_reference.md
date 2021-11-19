@@ -69,6 +69,8 @@ The login request is sent automatically, as soon as the object is instantiated. 
     `login_method = 'plain_text'`, `login_data = {'user': 'example_user', 'password': '1234abcd'}`
 4. **gpg_encrypted**: Provide the username as an argument and a path to a GPG encrypted file for the password *[Works for cronjobs and manual running]* <br>
     `login_method = 'gpg_encrypted'`, `login_data = {'user': 'example_user', 'file_path': '/path/to/encrypted_file.gpg'}`
+5. **azure_credential**: Provide the identifier for a azure credential manager instance and fetch the username and password from it directly. <br>
+    `login_method = 'azure_credential'`, `login_data = {'credential_identifier': 'cred123'}`
 
 **WARNING**: The logging module activated by the **debug option** of the `PlentySync` object, **will print your username and password** into the log as part of the response body.
 

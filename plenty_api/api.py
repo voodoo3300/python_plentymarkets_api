@@ -136,7 +136,7 @@ class PlentyApi():
             login_method[str]   -   Choose the login method from a variety of
                                     options:
                                         [keyring, direct, gpg_encrypted,
-                                         plain_text]
+                                         plain_text, azure_credential]
             login_data  [dict]  -   Elements for the specific login method
             data_format [str]   -   Output format of the response
             debug       [bool]  -   Print out additional information about the
@@ -160,7 +160,7 @@ class PlentyApi():
     def __authenticate(self, login_method: str, login_data: dict) -> bool:
         """
         Get the bearer token from the PlentyMarkets API.
-        There are four possible methods:
+        There are five possible methods:
             + Enter credentials once and keep the username and the password
               within a keyring ('keyring')
 
@@ -172,6 +172,8 @@ class PlentyApi():
 
             + Provide username and the password as arguments ('plain_text')
 
+            + Provide the identifier for a azure cloud credential instance
+              ('azure_credential')
 
         Parameter:
             login_method    [str]       -   Name of the login method
@@ -182,7 +184,7 @@ class PlentyApi():
                         [bool]
         """
         if login_method not in ['keyring', 'direct', 'gpg_encrypted',
-                                'plain_text']:
+                                'plain_text', 'azure_credential']:
             raise utils.InvalidLoginAttempt(
                 reason=f"invalid login method {login_method}")
         token = ''
@@ -224,6 +226,22 @@ class PlentyApi():
                 return False
             password = decrypt_pw.data.decode('utf-8').strip('\n')
             creds = {'username': login_data['user'], 'password': password}
+        elif login_method == 'azure_credential':
+            try:
+                import automationassets
+            except ModuleNotFoundError as err:
+                raise utils.InvalidLoginAttempt(
+                    reason="Login method `azure_credential` can only be used "
+                    "from an Azure cloud instance with prepared Python SDK"
+                ) from err
+            if 'credential_identifier' not in login_data:
+                raise utils.InvalidLoginAttempt(
+                    reason=str("Missing login data for the `azure_credential` "
+                               "login method, credential_identifier required "
+                               "as a key in the `login_data` dictionary.")
+                )
+            creds = automationassets.get_automation_credential(
+                login_data['credential_identifier'])
 
         endpoint = self.url + '/rest/login'
         response = requests.post(endpoint, params=creds)
