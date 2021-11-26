@@ -186,6 +186,39 @@ def get_route(domain: str) -> str:
     return ''
 
 
+def sniff_response_format(response: dict) -> dict:
+    """
+    Identify the type of response format to iterate through it with the correct
+    keys.
+
+    Go along ... Nothing to see here just the usual madness, why would anyone
+    wanna stick to one response format, that is boring right?
+
+    Parameter:
+        response                [dict]      -   GET request response body
+
+    Returns:
+                                [dict]      -   Mapping of elements used for
+                                                iterating through the response
+                                                to the matching keys and
+                                                conditions
+    """
+    if 'current_page' in response:
+        return {
+            'page': 'current_page',
+            'data': 'data',
+            'end_condition': lambda x: x['current_page'] == x['last_page'],
+            'last_page': 'last_page'
+        }
+    if 'isLastPage' in response:
+        return {
+            'page': 'page',
+            'data': 'entries',
+            'end_condition': lambda x: x['isLastPage'],
+            'last_page': 'lastPageNumber'
+        }
+    raise RuntimeError("Unsupported response format\n{response}")
+
 def get_language(lang: str) -> str:
     """
     Check if the given language abbreviation is a valid value and return it in

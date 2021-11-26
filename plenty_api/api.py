@@ -341,16 +341,17 @@ class PlentyApi():
                 isinstance(response, list)):
             return response
 
-        entries = response['entries']
+        page_info = utils.sniff_response_format(response=response)
+        entries = response[page_info['data']]
 
         if self.cli_progress_bar:
             pbar = None
-            if not response['isLastPage']:
+            if not page_info['end_condition'](response):
                 pbar = tqdm.tqdm(desc=f'Plentymarkets {domain} request',
-                                total=response['lastPageNumber'])
+                                 total=response[page_info['last_page']])
 
-        while not response['isLastPage']:
-            query.update({'page': response['page'] + 1})
+        while not page_info['end_condition'](response):
+            query.update({'page': response[page_info['page']] + 1})
             response = self.__plenty_api_request(method='get',
                                                  domain=domain,
                                                  path=path,
@@ -362,7 +363,7 @@ class PlentyApi():
                 logging.error(f"subsequent {domain} API requests failed.")
                 return response
 
-            entries += response['entries']
+            entries += response[page_info['data']]
 
             if self.cli_progress_bar:
                 if pbar:
