@@ -43,6 +43,10 @@ class PlentyApi():
 
     Public methods:
         GET REQUESTS
+        **plenty_api_get_pending_redistribution**
+
+        **plenty_api_get_pending_reorder**
+
         **plenty_api_get_orders_by_date**
 
         **plenty_api_get_attributes**
@@ -413,25 +417,17 @@ class PlentyApi():
         return utils.transform_data_type(
             data=data, data_format=self.data_format)
 
-    def plenty_api_get_pending_reorders(self, sender: int = 0,
-                                        receiver: int = 0) -> list:
+    def __plenty_api_get_pending_non_sales_orders(self, refine: dict) -> list:
         """
-        Get all reorders that have not been finished yet.
+        Get all non sales orders that have not been finished yet.
+        (Redistributions or Reorders)
         Parameters:
-        OPTIONAL
-            sender          [int]       -   Plentymarkets ID of the sender
-                                            contact
-            receiver        [int]       -   Plentymarkets ID of the receiver
-                                            warehouse
+            refine          [dict]      -   Refine arguments for the order
+                                            search
 
         Return:
                         [JSON(Dict) / DataFrame] <= self.data_format
         """
-        refine = {'orderType': ORDER_TYPES['reorder']}
-        if sender:
-            refine.update({'sender.contact': sender})
-        if receiver:
-            refine.update({'receiver.warehouse': receiver})
         additional = ['orderItems.transactions']
         query = utils.sanity_check_parameter(domain='order',
                                              query=None,
@@ -441,7 +437,8 @@ class PlentyApi():
         orders = self.__repeat_get_request_for_all_records(domain='orders',
                                                            query=query)
         if isinstance(orders, dict) and 'error' in orders.keys():
-            logging.error(f"GET orders by date failed with:\n{orders}")
+            logging.error("GET pending non sales orders failed with:\n"
+                          f"{orders}")
             return None
 
         pending_list = []
@@ -456,6 +453,73 @@ class PlentyApi():
                                            data_format=self.data_format)
 
         return orders
+
+    def plenty_api_get_pending_redistribution(
+        self, order_id: int = 0, sender: int = 0, receiver: int = 0,
+        shipping_packages: str = ''
+    ) -> list:
+        """
+        Get all redistribution that have not been finished yet.
+        Parameters:
+        OPTIONAL
+            order_id        [int]       -   Plentymarkets ID of a specific
+                                            order
+            sender          [int]       -   Plentymarkets ID of the sender
+                                            warehouse
+            receiver        [int]       -   Plentymarkets ID of the receiver
+                                            warehouse
+            shipping_packages [str]     -   Pull shipping packages for each
+                                            order, valid values:
+                                            [
+                                                '' - empty, no pull,
+                                                'minimal' - pull minimal info,
+                                                'full' - pull all information
+                                            ]
+
+        Return:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+        assert shipping_packages in ['', 'minimal', 'full']
+        refine = {'orderType': ORDER_TYPES['redistribution']}
+        if order_id:
+            refine.update({'orderIds': [order_id]})
+        if sender:
+            refine.update({'sender.warehouse': sender})
+        if receiver:
+            refine.update({'receiver.warehouse': receiver})
+        orders = self.__plenty_api_get_pending_non_sales_orders(refine=refine)
+        if shipping_packages != '':
+            for order in orders:
+                packages = self.plenty_api_get_shipping_packages_for_order(
+                    order_id=order['id'], mode=shipping_packages)
+                order['shippingPackages'] = packages
+        return orders
+
+    def plenty_api_get_pending_reorder(
+        self, order_id: int = 0, sender: int = 0, receiver: int = 0
+    ) -> list:
+        """
+        Get all reorders that have not been finished yet.
+        Parameters:
+        OPTIONAL
+            order_id        [int]       -   Plentymarkets ID of a specific
+                                            order
+            sender          [int]       -   Plentymarkets ID of the sender
+                                            contact
+            receiver        [int]       -   Plentymarkets ID of the receiver
+                                            warehouse
+
+        Return:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+        refine = {'orderType': ORDER_TYPES['reorder']}
+        if order_id:
+            refine.update({'orderIds': [order_id]})
+        if sender:
+            refine.update({'sender.contact': sender})
+        if receiver:
+            refine.update({'receiver.warehouse': receiver})
+        return self.__plenty_api_get_pending_non_sales_orders(refine=refine)
 
     def plenty_api_get_orders_by_date(self, start: str = '', end: str = '',
                                       date_type='creation', additional=None,

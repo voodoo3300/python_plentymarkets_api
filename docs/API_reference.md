@@ -7,6 +7,7 @@
 - [GET-Requests](#get-requests)
     + [Order related data](#get-order-section)
         * [get pending reorders](#get-pending-reorders)
+        * [get pending redistributions](#get-pending-redistributions)
         * [get orders by date](#get-orders-by-date)
         * [get shipping pallets](#get-pallets)
         * [get shipping package items](#get-package-items)
@@ -121,6 +122,24 @@ Pull all reorders that have not been closed.
 
 The **sender** parameter takes the ID of a contact in Plentymarkets, which in the case of a reorder should be a producer/supplier.
 The **receiver** parameter takes the ID of a warehouse in Plentymarkets.
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
+The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
+---
+
+##### plenty_api_get_pending_redistributions: <a name='get-pending-redistributions'></a>
+
+Pull all redistributions that have not been closed.
+
+[*Optional parameter*]:
+
+The **sender** parameter takes the ID of a contact in Plentymarkets, which in the case of a reorder should be a producer/supplier.
+The **receiver** parameter takes the ID of a warehouse in Plentymarkets.
+The **shipping_packages** parameter determines if shipping packages shall be added to the response and the extend of information about them. Valid values are ['', 'minimal', 'full'], no shipping packages are added by default. Pulling shipping packages requires additional requests (1 per pallet and 1 per package on each pallet).
 
 [*Output format*]:
 
