@@ -7,7 +7,8 @@ from plenty_api.utils import (
     get_utc_offset, build_query_date, create_vat_mapping, date_to_timestamp,
     get_language, shrink_price_configuration, sanity_check_parameter,
     attribute_variation_mapping, list_contains, json_field_filled,
-    build_redistribution_transactions, validate_redistribution_template
+    build_redistribution_transactions, validate_redistribution_template,
+    summarize_shipment_packages
 )
 
 
@@ -1127,3 +1128,220 @@ def describe_validate_redistribution_template():
         sample[1]['locations'][1]['targets'][0]['quantity'] = 8
         template = {'variations': sample}
         assert False is validate_redistribution_template(template)
+
+
+def describe_summarize_shipment_packages():
+    def with_empty_response():
+        expect = {}
+        assert summarize_shipment_packages(response=[],
+                                           mode='minimal') == expect
+
+    def with_one_package_minimal():
+        response = [
+            {
+                'createdAt': '1999-01-01 18:00:00', 'id': 12345,
+                'isClosed': False, 'labelPath': '', 'noOfPackage': 1,
+                'noOfPackagesInPallet': '1 of 1', 'orderId': 12345,
+                'packageId': 3, 'packageNumber': '', 'packageSscc': '',
+                'packageType': 0, 'palletId': 12345, 'returnPackageNumber': '',
+                'updatedAt': '1999-01-01 18:00:00', 'volume': 0, 'weight': 325,
+                'content': [
+                    {
+                        'attributeValues': 'Orange', 'batch': '',
+                        'bestBeforeDate': '', 'id': 12345,
+                        'itemId': 1234, 'itemName': 'test_product_1',
+                        'itemNetWeight': '0', 'itemQuantity': 1,
+                        'itemWeight': '220', 'orderItemId': 23456,
+                        'orderItemName': 'test_product', 'packageId': 23826,
+                        'serialNumber': None, 'variationId': 1234,
+                        'variationNumber': 'test_sku_1'
+                    },
+                ]
+             },
+        ]
+        expect = {
+            'content': {
+                1234: {
+                    'totalQuantity': 1,
+                    'packages': {
+                        12345: {23826: {'packageNo': 1, 'quantity': 1}}
+                    }
+                }
+            },
+            'pallets': {12345: [23826]}
+        }
+        assert summarize_shipment_packages(response=response,
+                                           mode='minimal') == expect
+
+    def with_one_package_full():
+        response = [
+            {
+                'createdAt': '1999-01-01 18:00:00', 'id': 12345,
+                'isClosed': False, 'labelPath': '', 'noOfPackage': 1,
+                'noOfPackagesInPallet': '1 of 1', 'orderId': 12345,
+                'packageId': 3, 'packageNumber': '', 'packageSscc': '',
+                'packageType': 0, 'palletId': 12345, 'returnPackageNumber': '',
+                'updatedAt': '1999-01-01 18:00:00', 'volume': 0, 'weight': 325,
+                'content': [
+                    {
+                        'attributeValues': 'Orange', 'batch': '',
+                        'bestBeforeDate': '', 'id': 12345,
+                        'itemId': 1234, 'itemName': 'test_product_1',
+                        'itemNetWeight': '0', 'itemQuantity': 1,
+                        'itemWeight': '220', 'orderItemId': 23456,
+                        'orderItemName': 'test_product', 'packageId': 23826,
+                        'serialNumber': None, 'variationId': 1234,
+                        'variationNumber': 'test_sku_1'
+                    },
+                ]
+             },
+        ]
+        expect = {
+            'content': {
+                1234: {
+                    'totalQuantity': 1,
+                    'attributeValues': 'Orange', 'batch': '',
+                    'bestBeforeDate': '', 'itemName': 'test_product_1',
+                    'itemNetWeight': '0', 'itemWeight': '220',
+                    'orderItemId': 23456, 'orderItemName': 'test_product',
+                    'serialNumber': None, 'variationId': 1234,
+                    'variationNumber': 'test_sku_1',
+                    'packages': {
+                        12345: {
+                            23826: {
+                                'packageNo': 1, 'quantity': 1,
+                                'createdAt': '1999-01-01 18:00:00',
+                                'isClosed': False, 'labelPath': '',
+                                'noOfPackagesInPallet': '1 of 1',
+                                'packageId': 3, 'packageNumber': '',
+                                'packageSscc': '', 'packageType': 0,
+                                'returnPackageNumber': '',
+                                'updatedAt': '1999-01-01 18:00:00',
+                                'volume': 0, 'weight': 325,
+                            }
+                        }
+                    }
+                }
+            },
+            'pallets': {12345: [23826]}
+        }
+        assert summarize_shipment_packages(response=response,
+                                           mode='full') == expect
+
+    def with_multiple_packages_minimal():
+        response = [
+            {
+                'createdAt': '1999-01-01 18:00:00', 'id': 23826,
+                'isClosed': False, 'labelPath': '', 'noOfPackage': 1,
+                'noOfPackagesInPallet': '1 of 2', 'orderId': 12345,
+                'packageId': 3, 'packageNumber': '', 'packageSscc': '',
+                'packageType': 0, 'palletId': 12345, 'returnPackageNumber': '',
+                'updatedAt': '1999-01-01 18:00:00', 'volume': 0, 'weight': 325,
+                'content': [
+                    {
+                        'attributeValues': 'Orange', 'batch': '',
+                        'bestBeforeDate': '', 'id': 12345,
+                        'itemId': 1234, 'itemName': 'test_product_1',
+                        'itemNetWeight': '0', 'itemQuantity': 1,
+                        'itemWeight': '220', 'orderItemId': 23456,
+                        'orderItemName': 'test_product', 'packageId': 23826,
+                        'serialNumber': None, 'variationId': 1234,
+                        'variationNumber': 'test_sku_1'
+                    },
+                ]
+            },
+            {
+                'createdAt': '1999-01-01 18:05:00', 'id': 23827,
+                'isClosed': False, 'labelPath': '', 'noOfPackage': 2,
+                'noOfPackagesInPallet': '2 of 2', 'orderId': 12345,
+                'packageId': 3, 'packageNumber': '', 'packageSscc': '',
+                'packageType': 0, 'palletId': 12345, 'returnPackageNumber': '',
+                'updatedAt': '1999-01-01 18:05:00', 'volume': 0, 'weight': 325,
+                'content': [
+                    {
+                        'attributeValues': 'Orange', 'batch': '',
+                        'bestBeforeDate': '', 'id': 12345,
+                        'itemId': 1234, 'itemName': 'test_product_1',
+                        'itemNetWeight': '0', 'itemQuantity': 1,
+                        'itemWeight': '220', 'orderItemId': 23456,
+                        'orderItemName': 'test_product', 'packageId': 23827,
+                        'serialNumber': None, 'variationId': 1234,
+                        'variationNumber': 'test_sku_1'
+                    },
+                    {
+                        'attributeValues': 'Blue', 'batch': '',
+                        'bestBeforeDate': '', 'id': 12346,
+                        'itemId': 1234, 'itemName': 'test_product_2',
+                        'itemNetWeight': '0', 'itemQuantity': 2,
+                        'itemWeight': '220', 'orderItemId': 23457,
+                        'orderItemName': 'test_product', 'packageId': 23827,
+                        'serialNumber': None, 'variationId': 1235,
+                        'variationNumber': 'test_sku_2'
+                    }
+                ]
+            },
+            {
+                'createdAt': '1999-01-01 18:10:00', 'id': 23828,
+                'isClosed': False, 'labelPath': '', 'noOfPackage': 1,
+                'noOfPackagesInPallet': '1 of 1', 'orderId': 12345,
+                'packageId': 3, 'packageNumber': '', 'packageSscc': '',
+                'packageType': 0, 'palletId': 12346, 'returnPackageNumber': '',
+                'updatedAt': '1999-01-01 18:10:00', 'volume': 0, 'weight': 325,
+                'content': [
+                    {
+                        'attributeValues': 'Red', 'batch': '',
+                        'bestBeforeDate': '', 'id': 12347,
+                        'itemId': 1234, 'itemName': 'test_product_3',
+                        'itemNetWeight': '0', 'itemQuantity': 3,
+                        'itemWeight': '220', 'orderItemId': 23458,
+                        'orderItemName': 'test_product', 'packageId': 23828,
+                        'serialNumber': None, 'variationId': 1236,
+                        'variationNumber': 'test_sku_3'
+                    },
+                    {
+                        'attributeValues': 'Blue', 'batch': '',
+                        'bestBeforeDate': '', 'id': 12348,
+                        'itemId': 1234, 'itemName': 'test_product_2',
+                        'itemNetWeight': '0', 'itemQuantity': 4,
+                        'itemWeight': '220', 'orderItemId': 23457,
+                        'orderItemName': 'test_product', 'packageId': 23828,
+                        'serialNumber': None, 'variationId': 1235,
+                        'variationNumber': 'test_sku_2'
+                    }
+                ]
+            },
+        ]
+        expect = {
+            'content': {
+                1234: {
+                    'totalQuantity': 2,
+                    'packages': {
+                        12345: {
+                            23826: {'packageNo': 1, 'quantity': 1},
+                            23827: {'packageNo': 2, 'quantity': 1}
+                        }
+                    }
+                },
+                1235: {
+                    'totalQuantity': 6,
+                    'packages': {
+                        12345: {
+                            23827: {'packageNo': 2, 'quantity': 2}
+                        },
+                        12346: {
+                            23828: {'packageNo': 1, 'quantity': 4}
+                        }
+                    }
+                },
+                1236: {
+                    'totalQuantity': 3,
+                    'packages': {
+                        12346: {23828: {'packageNo': 1, 'quantity': 3}}
+                    }
+                }
+            },
+            'pallets': {12345: [23826, 23827], 12346: [23828]}
+        }
+        assert summarize_shipment_packages(response=response,
+                                           mode='minimal') == expect
+

@@ -6,7 +6,11 @@
     + [GPG encrypted password file workflow](#gpg_workflow)
 - [GET-Requests](#get-requests)
     + [Order related data](#get-order-section)
+        * [get pending reorders](#get-pending-reorders)
         * [get orders by date](#get-orders-by-date)
+        * [get shipping pallets](#get-pallets)
+        * [get shipping package items](#get-package-items)
+        * [get shipping packages for order](#get-packages-for-order)
     + [get referrers](#get-referrers)
     + [Item related data](#get-items-section)
         * [get items](#get-items)
@@ -109,6 +113,23 @@ the password again).
 
 #### Orders <a name='get-order-section'></a>
 
+##### plenty_api_get_pending_reorders: <a name='get-pending-reorders'></a>
+
+Pull all reorders that have not been closed.
+
+[*Optional parameter*]:
+
+The **sender** parameter takes the ID of a contact in Plentymarkets, which in the case of a reorder should be a producer/supplier.
+The **receiver** parameter takes the ID of a warehouse in Plentymarkets.
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
+The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
+---
+
 ##### plenty_api_get_orders_by_date: <a name='get-orders-by-date'></a>
 
 By default, the *start* date is set to **yesterday** and the *end* date is set to **today**. You can adjust the date range by providing a string representation in one of the following formats for either both or one of these parameters.
@@ -144,14 +165,49 @@ The 'dataframe' format transforms that data structure into a pandas DataFrame, w
 
 ---
 
-##### plenty_api_get_pending_reorders: <a name='get-pending-reorders'></a>
+##### plenty_api_get_shipping_pallets: <a name='get-pallets'></a>
 
-Pull all reorders that have not been closed.
+Each order can have one or more shipping pallets filled with shipping packages, this route pulls either all shipping pallets or those that are connected to a specific order. A shipping pallet response **DOES NOT CONTAIN** the package items, in order to fetch these you have to either use the `plenty_api_get_shipping_package_items` route for each pallet or use the wrapper method `plenty_api_get_shipping_packages_for_order` to pull all pallets and packages for a specific order.
 
 [*Optional parameter*]:
 
-The **sender** parameter takes the ID of a contact in Plentymarkets, which in the case of a reorder should be a producer/supplier.
-The **receiver** parameter takes the ID of a warehouse in Plentymarkets.
+The **order_id** parameter restricts the request to all pallets connect to the given order ID.
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
+The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
+---
+
+##### plenty_api_get_shipping_package_items: <a name='get-package-items'></a>
+
+Pull the content of a specific package, the response will not include metadata about the package, as these information are only included in the pallet response.
+
+[*Required parameter*]:
+
+The **package_id** parameter contains a Plentymarkets ID for a specific package on a shipping pallet.
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
+The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
+---
+
+##### plenty_api_get_shipping_packages_for_order: <a name='get-packages-for-order'></a>
+
+Wrapper method around both `plenty_api_get_shipping_pallets` and `plenty_api_get_shipping_package_items`, which combines both responses into an easily usable datastructure, which is oriented around the variations. There are two types of report formats: *minimal* and *full*, the structure of both is similar but minimal reduces the output to an absolute minimum (variation ID, pallet ID, package ID, package NO on pallet, quantity, total quantity per variation and a mapping of package IDs to pallet IDs).
+
+[*Required parameter*]:
+
+The **order_id** parameter contains a valid Plentymarkets Order ID.
+
+[*Optional parameter*]:
+
+The **mode** parameter chooses the report format, the default format is *full*. And valid values are: ['full', 'minimal'].
 
 [*Output format*]:
 

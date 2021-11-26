@@ -73,6 +73,12 @@ class PlentyApi():
 
         **plenty_api_get_property_selection_names**
 
+        **plenty_api_get_shipping_pallets**
+
+        **plenty_api_get_shipping_package_items**
+
+        **plenty_api_get_shipping_packages_for_order**
+
         POST REQUESTS
         **plenty_api_set_image_availability**
 
@@ -960,6 +966,68 @@ class PlentyApi():
         data = self.__plenty_api_generic_get(domain='v2property', path=path)
 
         return data
+
+    def plenty_api_get_shipping_pallets(self, order_id: int = 0):
+        """
+        Get shipping pallets from Plentymarkets, optionally from a specific
+        order.
+
+        Parameter:
+        OPTIONAL
+            order_id            [int]       -   ID of the order to pull
+                                                shipping pallets from
+
+        Return:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+        path = '/shipping/pallets'
+        query = {} if not order_id else {'orderId': order_id}
+        return self.__plenty_api_generic_get(
+            domain='order', path=path, query=query)
+
+    def plenty_api_get_shipping_package_items(self, package_id: int):
+        """
+        Get the content of a shipping package from Plentymarkets.
+
+        Parameter:
+            package_id          [int]       -   ID of the packae to pull
+                                                items from
+
+        Return:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+        path = f'/shipping/packages/{package_id}/items'
+        orders = self.__repeat_get_request_for_all_records(
+            domain='order', path=path, query={})
+        return utils.transform_data_type(
+            data=orders, data_format=self.data_format)
+
+    def plenty_api_get_shipping_packages_for_order(self, order_id: int,
+                                                   mode: str = 'full'):
+        """
+        Get the content of all shipping packages from a specific order.
+
+        Parameter:
+            order_id            [int]       -   ID of the order to pull
+                                                shipping packages from
+            mode                [str]       -   Summary format (minimal/full)
+                                                default is full
+
+        Return:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+        assert mode in ['minimal', 'full']
+        pallets = self.plenty_api_get_shipping_pallets(order_id=order_id)
+        package_responses = []
+        for pallet in pallets:
+            for package in pallet['packages']:
+                package_response = self.plenty_api_get_shipping_package_items(
+                    package_id=package['id'])
+                package['content'] = package_response
+                package_responses.append(package)
+
+        return utils.summarize_shipment_packages(
+            response=package_responses, mode=mode)
 
 # POST REQUESTS
 

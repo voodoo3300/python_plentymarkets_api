@@ -18,7 +18,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+from collections import defaultdict
 import getpass
 import datetime
 import time
@@ -928,3 +928,61 @@ def json_field_filled(json_field, field_type: int) -> bool:
         if not all([isinstance(x, dict) and len(x) > 0 for x in json_field]):
             return False
     return True
+
+def summarize_shipment_packages(response: dict, mode: str) -> dict:
+    assert mode in ['full', 'minimal']
+    order_content = defaultdict(dict)
+    pallet_summary = defaultdict(set)
+    if not response:
+        return {}
+    for package in response:
+        for item in package['content']:
+            variation = item['variationId']
+            quantity = item['itemQuantity']
+            package_id = item['packageId']
+            pallet_id = package['palletId']
+            package_no = package['noOfPackage']
+            summary_variation = order_content[variation]
+            pallet_summary[pallet_id].add(package_id)
+            try:
+                summary_variation['totalQuantity'] += quantity
+            except KeyError:
+                summary_variation['totalQuantity'] = quantity
+            try:
+                summary_variation['packages'][pallet_id].update(
+                    {
+                        package_id: {
+                            'packageNo': package_no, 'quantity': quantity
+                        }
+                    }
+                )
+            except KeyError:
+                summary_variation['packages'] = defaultdict(dict)
+                summary_variation['packages'][pallet_id] = {
+                    package_id: {
+                        'packageNo': package_no, 'quantity': quantity
+                    }
+                }
+            if mode == 'full':
+                item_keys = [
+                    'attributeValues', 'batch', 'bestBeforeDate', 'itemName',
+                    'itemNetWeight', 'itemWeight', 'orderItemId',
+                    'orderItemName', 'serialNumber', 'variationId',
+                    'variationNumber'
+                ]
+                package_keys = [
+                    'createdAt', 'isClosed', 'labelPath', 'packageId',
+                    'noOfPackagesInPallet', 'packageNumber', 'packageSscc',
+                    'packageType', 'returnPackageNumber', 'updatedAt',
+                    'volume', 'weight'
+                ]
+                summary_variation.update({key: item[key] for key in item_keys})
+                summary_variation['packages'][pallet_id][package_id].update(
+                    {key: package[key] for key in package_keys}
+                )
+    return {
+        'content': order_content,
+        'pallets': {
+            key: list(values) for key, values in pallet_summary.items()
+        }
+    }
