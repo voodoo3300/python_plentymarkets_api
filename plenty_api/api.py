@@ -1078,7 +1078,7 @@ class PlentyApi():
             columns = ['property_id', 'selection_id', 'language', 'name']
             return pandas.DataFrame(df_data, columns=columns)
 
-        return selection_map
+        return dict(selection_map)
 
     def plenty_api_get_property_selection_names(self, selection_id: int):
         """
