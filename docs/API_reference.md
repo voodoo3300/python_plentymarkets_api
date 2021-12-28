@@ -739,7 +739,10 @@ Create a new name for an existing property selection value for the given languag
 
 [*Required parameter*]:
 
-The **property_id** parameter contains the Plentymarkets ID of a property for which a new selection name value is being added, the **lang** parameter contains a two letter abbreviation of the target language (for a list of valid values look here: [Language codes](https://developers.plentymarkets.com/en-gb/developers/main/rest-api-guides/getting-started.html#_language_codes)), and the **name** parameter contains the visible name for the selection name in the given language.
+**property_id** parameter, the Plentymarkets ID of a property for which a new selection name value is being added.  
+**selection_id** parameter, the ID of the specific selection.  
+**lang** parameter, a two letter abbreviation of the target language (for a list of valid values look here: [Language codes](https://developers.plentymarkets.com/en-gb/developers/main/rest-api-guides/getting-started.html#_language_codes))  
+**name** parameter, the visible name for the selection name in the given language.
 
 [*Output format*]:
 
