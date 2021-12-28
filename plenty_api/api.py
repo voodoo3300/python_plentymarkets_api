@@ -1544,6 +1544,43 @@ class PlentyApi():
                                              data=data)
         return response
 
+    def plenty_api_create_property_selection(
+        self, property_id: int, position: int, names: List[Dict[str, str]]
+    ) -> dict:
+        """
+        Create a new selection value for a selection property with a variable
+        amount of selection names.
+
+        WARNING the Plentymarkets API will not detect duplicates.
+
+        Parameters:
+            property_id         [int]       -   Plentymarkets ID of the
+                                                selection property
+            position            [int]
+            names               [list]      -   List of dictionaries for the
+                                                selection, Example:
+                                                [
+                                                    {
+                                                        'lang': 'de',
+                                                        'name': 'Test',
+                                                        'description': 'Woop'
+                                                    }
+                                                ]
+
+        Returns:
+                                [dict]      -   Response object if the request
+                                                should fail, the entry contains
+                                                the error message.
+        """
+        json = {
+            'propertyId': property_id,
+            'position': position,
+            'names': names
+        }
+        path = "/selections"
+        response = self.__plenty_api_request(method="post", path=path,
+                                             domain="v2property", data=json)
+        return response
 
     def plenty_api_create_property_selection_name(
         self, property_id: int, selection_id: int, lang: str, name: str

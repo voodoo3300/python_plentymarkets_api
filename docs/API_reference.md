@@ -40,7 +40,8 @@
         * [post attribute names](#post-attribute-names)
         * [post attribute values](#post-attribute-values)
         * [post attribute value names](#post-attribute-value-names)
-        * [post property selection name](#create-property-selection)
+        * [post property selection](#create-property-selection)
+        * [post property selection name](#create-property-selection-name)
     + [Order related data](#post-order-section)
         * [post redistribution (move stock from one warehouse to another)](#post-redistribution)
         * [post reorder (refill stock within a warehouse)](#post-reorder)
@@ -733,7 +734,38 @@ Return a POST request JSON response, if one of the requests fails return the err
 If the **value_id** field is not filled the method will return: `{'error': 'missing_parameter'}`.
 In case the language within the `lang` field of the JSON is invalid the method will return `{'error': 'invalid_language'}`.
 
-#### plenty_api_create_property_selection_name <a name=create-property-selection></a>
+#### plenty_api_create_property_selection <a name=create-property-selection></a>
+
+Create a new selection value for an existing property with a variable amount of names.
+
+[*Required parameter*]:
+
+**property_id** parameter, the Plentymarkets ID of a property for which a new selection value is being added.  
+**position** parameter, declares the position of the selection value in relation to other selection values (doesn't need to be unique).  
+**names** parameter, list of dictionaries containing a combination of a 2 letter language identifier, a matching name and an optional description.  
+*Example*:  
+```json
+[
+    {
+        'lang': 'de',
+        'name': 'Hase',
+        'description': 'Karottenfresser'
+    },
+    {
+        'lang': 'en',
+        'name': 'Rabbit',
+        'description': 'Carrot eater'
+    },
+]
+```
+
+[*Output format*]:
+
+Return a POST request JSON response, if one of the requests fails return the error message.
+If the **property_id**, **lang** or **name** field is not filled the method will return: `{'error': 'missing_parameter'}`.
+In case the language within the `lang` field of the JSON is invalid the method will return `{'error': 'invalid_language'}`.
+
+#### plenty_api_create_property_selection_name <a name=create-property-selection-name></a>
 
 Create a new name for an existing property selection value for the given language.
 
