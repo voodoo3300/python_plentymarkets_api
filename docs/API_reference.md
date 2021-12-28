@@ -19,6 +19,7 @@
         * [get attributes](#get-attributes)
         * [get prices](#get-prices)
         * [get manufacturers](#get-manufacturers)
+        * [get property names](#get-property-names)
         * [get property selections](#get-property-selections)
         * [get property selections names](#get-property-selections-names)
     + [Tax related data](#get-taxes-section)
@@ -376,6 +377,47 @@ The dates are accepted in the following formats:
 There are currently two supported output formats: 'json' and 'dataframe'.  
 The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
 The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
+---
+
+##### plenty_api_get_property_names: <a name='get-property-names'></a>
+
+Create a mapping of property IDs to names in one or more languages.
+
+[*Optional parameter*]:
+
+The **property_id** field can be used to reduce the request to a single property ID or to filter the response to a list of property IDs (in the second case, we actually pull all properties from the REST API, but reduce it afterward).
+
+With the **lang** parameter the result set can be further reduced to a single language or a sub-set of available languages.
+
+The default value for both **property_id** and **lang** is `None`, which indicates to pull all properties with all languages.
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format returns a dictionary of property IDs to language-name pairs.  
+Example:  
+```{1: {'de': 'name de', 'en': 'name en'}}```  
+The 'dataframe' format transforms that data structure into a pandas DataFrame.  
+Example:
+```
+property_id | lang | name
+1           | de   | name de
+1           | en   | name en
+```
+
+---
+
+##### plenty_api_get_property_selections_names: <a name='get-property-selections-names'></a>
+
+Get all names of a specific selection_id, with additional data such as the nameId, which is needed for updating selection names.
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
+The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
 
 ---
 

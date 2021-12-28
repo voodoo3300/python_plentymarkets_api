@@ -19,7 +19,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 import time
-from typing import List
+from typing import Dict, List, Union
 import requests
 import simplejson
 import gnupg
@@ -31,7 +31,9 @@ from datetime import datetime, timezone, date, timedelta
 
 import plenty_api.keyring
 import plenty_api.utils as utils
-from plenty_api.constants import IMPORT_ORDER_DATE_TYPES, ORDER_TYPES
+from plenty_api.constants import (
+    IMPORT_ORDER_DATE_TYPES, ORDER_TYPES, VALID_LANGUAGES
+)
 
 
 class PlentyApi():
@@ -70,6 +72,8 @@ class PlentyApi():
         **plenty_api_get_variation_warehouses**
 
         **plenty_api_get_contacts**
+
+        **plenty_api_get_property_names**
 
         **plenty_api_get_property_selections**
 
@@ -971,6 +975,69 @@ class PlentyApi():
             domain='contact',
             refine=refine,
             additional=additional)
+
+    def plenty_api_get_property_names(
+        self, property_id: Union[int, List[int]] = None,
+        lang: Union[str, List[str]] = None
+    ) -> Union[Dict[int, Dict[str, str]], pandas.DataFrame]:
+        """
+        Fetch a mapping of property IDs to one or more names in various
+        languages.
+
+        Parameters:
+            property_id         [int/list]      -   Restrict the request to a
+                                                    list of IDs or a single ID,
+                                                    None indicates to pull all
+            lang                [str/list]      -   Restrict the result data to
+                                                    a list of languages or to a
+                                                    single language,
+                                                    None indicates to pull all.
+
+        Returns:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+        assert isinstance(property_id, (int, list, type(None)))
+        assert isinstance(lang, (str, list, type(None)))
+        if isinstance(lang, str):
+            lang = [lang]
+        if lang:
+            assert all(x in VALID_LANGUAGES for x in lang)
+
+        domain = 'property'
+        path = '/names'
+        query = {}
+        if isinstance(property_id, int):
+            query.update({'propertyId': property_id})
+        data = self.__repeat_get_request_for_all_records(
+            domain=domain, path=path, query=query
+        )
+        if self.data_format == 'dataframe':
+            processed_data = defaultdict(list)
+        else:
+            processed_data = defaultdict(dict)
+        for prop in data:
+            if (
+                (lang and prop['lang'] not in lang) or
+                (isinstance(property_id, list) and
+                 prop['propertyId'] not in property_id)
+            ):
+                continue
+            if self.data_format == 'dataframe':
+                processed_data['property_id'].append(prop['propertyId'])
+                processed_data['lang'].append(prop['lang'])
+                processed_data['name'].append(prop['name'])
+            else:
+                processed_data[prop['propertyId']].update(
+                    {prop['lang']: prop['name']}
+                )
+        if self.data_format == 'dataframe':
+            dataframe = pandas.DataFrame.from_dict(processed_data)
+            if len(dataframe.index) > 0:
+                dataframe.sort_values(
+                    ['property_id', 'lang'], inplace=True, ignore_index=True
+                )
+            return dataframe
+        return dict(processed_data)
 
     def plenty_api_get_property_selections(self, refine: dict = None):
         """
