@@ -217,6 +217,18 @@ def sniff_response_format(response: dict) -> dict:
             'end_condition': lambda x: x['isLastPage'],
             'last_page': 'lastPageNumber'
         }
+
+    ''' Well, it seems, BI file list doesn't have a propper pagination, so lets try to implement a way to iterate'''
+    
+    if 'searchResult' in response:
+        
+        return {
+            'page': None,
+            'data': 'searchResult',
+            'end_condition': None,
+            'last_page': None
+        }
+
     raise RuntimeError("Unsupported response format\n{response}")
 
 def get_language(lang: str) -> str:
