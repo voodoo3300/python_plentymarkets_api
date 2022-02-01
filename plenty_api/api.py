@@ -474,6 +474,104 @@ class PlentyApi():
 
         return orders
 
+    def __repeat_get_request_for_all_unpaginated_records(self,
+                                             domain: str,
+                                             query: dict,
+                                             path: str = '') -> dict:
+        """
+        Collect data records from multiple API requests in a single JSON
+        data structure, where the respone has no pagination. E.g. BI-Searchresult
+
+        Parameter:
+            domain      [str]   -   bi_raw
+            query       [dict]  -   Additional options for the request
+
+        Return:
+                        [dict]  -   API response in as javascript object
+                                    notation
+        """
+
+        ''' Intercept itemsPerPage query, so we can determinate if we've reaced the last page
+            Plenty-Default: 20, but we set it to 100 (max) if no parameter was set. So we save
+            request, if there is a huge amount of data
+        '''        
+
+        if 'itemsPerPage' not in query:
+            query.update({'itemsPerPage':100})
+        
+        if 'page' not in query:
+            query.update({'page':1})
+
+        logging.warn(f"searchresult for {domain} API-Request is not paginated! Explorative fetching may take some time!")
+        response = self.__plenty_api_request(method='get',
+                                             domain=domain,
+                                             path=path,
+                                             query=query)
+        if not response:
+            return None
+
+        if ((isinstance(response, dict) and 'error' in response.keys()) or
+                isinstance(response, list)):
+            return response
+
+
+        page_info = utils.sniff_response_format(response=response)
+        entries = response[page_info['data']]
+
+        while True:
+            logging.debug(f"fetching page {query['page'] + 1}")
+            query.update({'page': query['page'] + 1})
+            response = self.__plenty_api_request(method='get',
+                                                 domain=domain,
+                                                 path=path,
+                                                 query=query)
+            if not response:
+                return None
+
+            if isinstance(response, dict) and 'error' in response.keys():
+                logging.error(f"subsequent {domain} API requests failed.")
+                return response
+
+            entries += response[page_info['data']]
+
+            if len(response[page_info['data']]) < query['itemsPerPage']:
+                break
+
+        return entries
+
+
+
+
+
+    def plenty_api_get_bi_raw_files(self, refine: dict) -> list:
+        """
+        Get a list of BI-Rawdata files
+
+        Parameters:
+            refine          [dict]      -   Refine arguments for the order
+                                            search
+
+        Return:
+                        [JSON(Dict) / DataFrame] <= self.data_format
+        """
+
+        query = utils.sanity_check_parameter(domain='bi_raw',
+                                             query=None,
+                                             refine=refine,
+                                             additional=None)
+
+        bi_files = self.__repeat_get_request_for_all_unpaginated_records(domain='bi_raw',
+                                                           query=query)
+        if isinstance(bi_files, dict) and 'error' in bi_files.keys():
+            logging.error("GET BI-Rawfile list failed with:\n"
+                          f"{bi_files}")
+            return None
+
+        bi_files = utils.transform_data_type(data=bi_files,
+                                           data_format=self.data_format)
+
+        return bi_files
+
     def plenty_api_get_pending_redistribution(
         self, order_id: int = 0, sender: int = 0, receiver: int = 0,
         shipping_packages: str = ''
