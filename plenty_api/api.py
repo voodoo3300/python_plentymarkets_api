@@ -35,6 +35,7 @@ from plenty_api.constants import (
     IMPORT_ORDER_DATE_TYPES, ORDER_TYPES, VALID_LANGUAGES
 )
 
+import os
 
 class PlentyApi():
     """
@@ -331,6 +332,11 @@ class PlentyApi():
             time.sleep(3)
 
         logging.debug(f"request url: {raw_response.request.url}")
+        
+        # if we get a file as response, just return the content of raw_respone, so it can be written to a file
+        if utils.is_dumpable_respone(raw_response):
+            return raw_response.content
+
         try:
             response = raw_response.json()
         except simplejson.errors.JSONDecodeError:
@@ -518,42 +524,84 @@ class PlentyApi():
         page_info = utils.sniff_response_format(response=response)
         entries = response[page_info['data']]
 
-        while True:
-            logging.debug(f"fetching page {query['page'] + 1}")
-            query.update({'page': query['page'] + 1})
-            response = self.__plenty_api_request(method='get',
-                                                 domain=domain,
-                                                 path=path,
-                                                 query=query)
-            if not response:
-                return None
+        if len(response[page_info['data']]) == query['itemsPerPage']:
+            while True:
+                logging.debug(f"fetching page {query['page'] + 1}")
+                query.update({'page': query['page'] + 1})
+                response = self.__plenty_api_request(method='get',
+                                                    domain=domain,
+                                                    path=path,
+                                                    query=query)
+                if not response:
+                    return None
 
-            if isinstance(response, dict) and 'error' in response.keys():
-                logging.error(f"subsequent {domain} API requests failed.")
-                return response
+                if isinstance(response, dict) and 'error' in response.keys():
+                    logging.error(f"subsequent {domain} API requests failed.")
+                    return response
 
-            entries += response[page_info['data']]
+                entries += response[page_info['data']]
 
-            if len(response[page_info['data']]) < query['itemsPerPage']:
-                break
+                if len(response[page_info['data']]) < query['itemsPerPage']:
+                    break
 
         return entries
 
 
+    def __get_request_dump_file(self,
+                                             domain: str,
+                                             query: dict,
+                                             path: str = '',
+                                             download_filepath: str = '') -> dict:
+        """
+        Dumping raw response to file.
+        Used to download files via Plenty REST API
+
+        Parameter:
+            domain      [str]   -   bi_raw...
+            query       [dict]  -   Additional options for the request
+
+        Return:
+                        [dict]  -   filename on success or response on error
+        """
+        response = self.__plenty_api_request(method='get',
+                                             domain=domain,
+                                             path=path,
+                                             query=query)
+        
+        
+        
+        if not response:
+            return None
+
+        if ((isinstance(response, dict) and 'error' in response.keys()) or
+                isinstance(response, list)):
+            return response
+        
+        try:
+            requested_file = open(download_filepath, "wb")
+        except IOError as e:
+            raise
+        else:
+            with requested_file:
+                requested_file.write(response)
+                return {'file': download_filepath}
 
 
-
-    def plenty_api_get_bi_raw_files(self, refine: dict) -> list:
+    def plenty_api_get_bi_raw_files(self, refine: dict, download=False, download_directory='.') -> list:
         """
         Get a list of BI-Rawdata files
 
         Parameters:
-            refine          [dict]      -   Refine arguments for the order
+            refine              [dict]      -   Refine arguments for the order
                                             search
+            download            [bool]      -   Performing download
+            download_directory  [str]    -   Target directory
 
         Return:
                         [JSON(Dict) / DataFrame] <= self.data_format
         """
+
+
 
         query = utils.sanity_check_parameter(domain='bi_raw',
                                              query=None,
@@ -566,11 +614,18 @@ class PlentyApi():
             logging.error("GET BI-Rawfile list failed with:\n"
                           f"{bi_files}")
             return None
+            
+        if download:
+            for bi_file in bi_files:
+                file_destination = os.path.join(download_directory, os.path.basename(bi_file['path']))
+                self.__get_request_dump_file(domain='bi_raw', path='/file', query={'path':bi_file['path']}, download_filepath=file_destination)
 
         bi_files = utils.transform_data_type(data=bi_files,
                                            data_format=self.data_format)
 
         return bi_files
+
+        
 
     def plenty_api_get_pending_redistribution(
         self, order_id: int = 0, sender: int = 0, receiver: int = 0,
