@@ -38,7 +38,7 @@ VALID_DOMAINS = [
     'warehouses',
     'property',
     'v2property',
-    'bi_raw'
+    'bi_raw',
 ]
 VALID_ROUTES = [
     '/rest/items/attributes',
@@ -56,7 +56,7 @@ VALID_ROUTES = [
     '/rest/stockmanagement/warehouses',
     '/rest/properties',
     '/rest/v2/properties',
-    '/rest/bi/raw-data'
+    '/rest/bi/raw-data',
 ]
 DOMAIN_ROUTE_MAP = dict(zip(VALID_DOMAINS, VALID_ROUTES))
 
@@ -248,3 +248,7 @@ REQUIRED_FIELDS_MAP = {
     'attribute_values': REQUIRED_ATTRIBUTE_VALUE_FIELDS,
     'transaction': REQUIRED_TRANSACTION_FIELDS
 }
+
+#  To dump raw data or documents from plenty BI, we cannot handle the response as JSON.
+#  To determinate if we can download a file, we use the content-type  
+DUMPABLE_CONTENT_TYPES = ['application/gzip']

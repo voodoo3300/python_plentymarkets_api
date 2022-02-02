@@ -998,3 +998,15 @@ def summarize_shipment_packages(response: dict, mode: str) -> dict:
             key: list(values) for key, values in pallet_summary.items()
         }
     }
+
+
+
+# Usually, we expect application/json, witch we can encode and everything is fine.
+# But if we want to dump a file, like an export or BI data, the parser would fail
+# in this case, we need to dump the raw content.
+# In my opinion, it's better to explicitly allow special. which kind of data can be 
+# dumped, insted of stupitly dumping everything no-JSON-kind-of-stuff?
+def is_dumpable_respone(raw_respone):
+    if raw_respone.headers['Content-Type'] in constants.DUMPABLE_CONTENT_TYPES:
+        return True
+    return False
