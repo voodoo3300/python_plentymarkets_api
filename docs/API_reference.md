@@ -566,13 +566,13 @@ The 'dataframe' format transforms that data structure into a pandas DataFrame, w
 
 #### Plenty BI related data <a name='get-bi-section'></a>
 
-##### plenty_api_get_contacts <a name='get-bi'></a>
+##### plenty_api_get_bi_raw_files <a name='get-bi'></a>
 
 Get list of raw data files and (optionally) download raw data.
 
 [*Optional parameter*]:
 **dataName**:  restricts the search results to raw data files e.g. orders,orderItems.
-Multible raw data files can be separated by comma.
+Multiple raw data files can be separated by comma.
 
 **processStatus**:  Current process status, the status is only changed by internal processing. If this filter is used, the filter dataNames may only contain one value.
 
