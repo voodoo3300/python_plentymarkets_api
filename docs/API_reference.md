@@ -31,6 +31,8 @@
         * [get warehouses for a variation](#get-warehouses)
     + [Contact data (CRM)](#get-contact-section)
         * [get contact data](#get-contacts)
+    + [Plenty BI related data](#get-bi-section)
+		* [get BI files](#get-bi)
 - [POST-Requests](#post-requests)
     + [Item related data](#post-items-section)
         * [post image avaialability](#post-image-availability)
@@ -555,6 +557,36 @@ fullText, contactEmail, email, postalCode, plentyId, externalId, number, typeId,
 
 Use the **additional** field to add more values to the response, valid values are:  
 addresses, accounts, options, orderSummary, primaryBillingAddress, contactOrders
+
+[*Output format*]:
+
+There are currently two supported output formats: 'json' and 'dataframe'.  
+The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
+The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
+#### Plenty BI related data <a name='get-bi-section'></a>
+
+##### plenty_api_get_contacts <a name='get-bi'></a>
+
+Get list of raw data files and (optionally) download raw data.
+
+[*Optional parameter*]:
+**dataName**:  restricts the search results to raw data files e.g. orders,orderItems.
+Multible raw data files can be separated by comma.
+
+**processStatus**:  Current process status, the status is only changed by internal processing. If this filter is used, the filter dataNames may only contain one value.
+
+**createdAtTimestamp**: UNIX-Timestamp from when daily generated raw data are to be filtered. This filter cannot be combined with the following filters: dataNames, processStatus
+
+**itemsPerPage**: The number of raw data files to be returned. In this implemetation the maximum of 100 items is set to default (instead of Plenty's 20)
+The default number of files is 20 and the maximum is 100.
+
+**sortOrder**: Defines the sort order.
+Possible values are: asc, desc
+
+If **download** is set to True, the files will be stored. If it is set to False, only a file list is returned.
+
+A download directory can be specified with **download_directory**
 
 [*Output format*]:
 
