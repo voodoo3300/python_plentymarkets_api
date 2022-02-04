@@ -571,8 +571,7 @@ The 'dataframe' format transforms that data structure into a pandas DataFrame, w
 Get list of raw data files and (optionally) download raw data.
 
 [*Optional parameter*]:
-**dataName**:  restricts the search results to raw data files e.g. orders,orderItems.
-Multiple raw data files can be separated by comma.
+**dataName**:  restricts the search results to raw data files e.g. orders, orderItems.
 
 **processStatus**:  Current process status, the status is only changed by internal processing. If this filter is used, the filter dataNames may only contain one value.
 
