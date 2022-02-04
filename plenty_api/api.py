@@ -592,10 +592,9 @@ class PlentyApi():
         Get a list of BI-Rawdata files
 
         Parameters:
-            refine              [dict]      -   Refine arguments for the order
-                                            search
+            refine              [dict]      -   Refine arguments for the BI
             download            [bool]      -   Performing download
-            download_directory  [str]    -   Target directory
+            download_directory  [str]       -   Target directory
 
         Return:
                         [JSON(Dict) / DataFrame] <= self.data_format
@@ -614,12 +613,14 @@ class PlentyApi():
             logging.error("GET BI-Rawfile list failed with:\n"
                           f"{bi_files}")
             return None
-            
-        if download:
-            for bi_file in bi_files:
-                file_destination = os.path.join(download_directory, os.path.basename(bi_file['path']))
-                self.__get_request_dump_file(domain='bi_raw', path='/file', query={'path':bi_file['path']}, download_filepath=file_destination)
 
+        if download:
+            if len(bi_files) > 0:
+                for bi_file in bi_files:
+                    file_destination = os.path.join(download_directory, os.path.basename(bi_file['path']))
+                    self.__get_request_dump_file(domain='bi_raw', path='/file', query={'path':bi_file['path']}, download_filepath=file_destination)
+            else:
+                logging.warn('Nothing to download - got empty result! Ether check filter params or BI config in PlentyMarkets!')
         bi_files = utils.transform_data_type(data=bi_files,
                                            data_format=self.data_format)
 
