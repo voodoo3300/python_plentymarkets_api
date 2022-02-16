@@ -32,7 +32,7 @@ from datetime import datetime, timezone, date, timedelta
 import plenty_api.keyring
 import plenty_api.utils as utils
 from plenty_api.constants import (
-    IMPORT_ORDER_DATE_TYPES, ORDER_TYPES, VALID_LANGUAGES
+    IMPORT_ORDER_DATE_TYPES, ORDER_TYPES, VALID_LANGUAGES, DUMPABLE_CONTENT_TYPES
 )
 
 import os
@@ -85,6 +85,10 @@ class PlentyApi():
         **plenty_api_get_shipping_package_items**
 
         **plenty_api_get_shipping_packages_for_order**
+
+        **plenty_api_dump_bi_raw_file**
+
+        **plenty_api_get_bi_raw_files**
 
         POST REQUESTS
         **plenty_api_set_image_availability**
@@ -333,8 +337,8 @@ class PlentyApi():
 
         logging.debug(f"request url: {raw_response.request.url}")
         
-        # if we get a file as response, just return the content of raw_respone, so it can be written to a file
-        if utils.is_dumpable_respone(raw_response):
+        # if the response is a file, return raw content, so it can be written to a file
+        if raw_response.headers['Content-Type'] in DUMPABLE_CONTENT_TYPES:
             return raw_response.content
 
         try:
@@ -377,17 +381,37 @@ class PlentyApi():
                 isinstance(response, list)):
             return response
 
-        page_info = utils.sniff_response_format(response=response)
-        entries = response[page_info['data']]
+        page_info = utils.sniff_response_format(response=response, query=query)
+        # Handle page slices (custom selection of pages)
+        slice_start = ''
+        slice_end = ''
+        if 'pages' in query:
+            pages = query['pages']
+            slice_start = pages['start_page'] if 'start_page' in pages else ''
+            slice_end = pages['end_page'] if 'end_page' in pages else ''
+            logging.debug(f"Using page slice [{slice_start}:{slice_end}]")
+        if slice_start and slice_start >= 2:
+            entries = []
+        else:
+            entries = response[page_info['data']]
 
-        if self.cli_progress_bar:
+        if self.cli_progress_bar and page_info['last_page']:
             pbar = None
             if not page_info['end_condition'](response):
                 pbar = tqdm.tqdm(desc=f'Plentymarkets {domain} request',
                                  total=response[page_info['last_page']])
+        elif self.cli_progress_bar and not page_info['last_page']:
+            logging.warn(f"Response for {domain} has no pagination, unable to detect the number of pages.")
 
+        page = 1
         while not page_info['end_condition'](response):
-            query.update({'page': response[page_info['page']] + 1})
+            # Count from 1 onward if the response has no pagination
+            if page_info['page']:
+                page = response[page_info['page']] + 1
+            else:
+                page = page + 1
+            query.update({'page': page})
+
             response = self.__plenty_api_request(method='get',
                                                  domain=domain,
                                                  path=path,
@@ -399,13 +423,22 @@ class PlentyApi():
                 logging.error(f"subsequent {domain} API requests failed.")
                 return response
 
+            if slice_start and page < slice_start:
+                # Skip pages before the beginning of the slice
+                print('skip page {}'.format(page))
+                continue
+
             entries += response[page_info['data']]
+
+            if slice_end and page == slice_end:
+                # Skip requests for pages after the end of the slice
+                break
 
             if self.cli_progress_bar:
                 if pbar:
                     pbar.update(1)
 
-        if self.cli_progress_bar:
+        if self.cli_progress_bar and page_info['last_page']:
             if pbar:
                 pbar.close()
 
@@ -480,153 +513,91 @@ class PlentyApi():
 
         return orders
 
-    def __repeat_get_request_for_all_unpaginated_records(self,
-                                             domain: str,
-                                             query: dict,
-                                             path: str = '') -> dict:
+    def plenty_api_dump_bi_raw_file(self,
+                                    remote_files: Union[str, dict, list],
+                                    download_directory: str = '.') -> dict:
         """
-        Collect data records from multiple API requests in a single JSON
-        data structure, where the respone has no pagination. E.g. BI-Searchresult
+        Dumping BI raw data to file.
 
         Parameter:
-            domain      [str]   -   bi_raw
-            query       [dict]  -   Additional options for the request
+            remote_files       [str, dict, list]  -   BI files to download                        
+                                                      determines the path to the raw data
+                                                      this can be a string, a list of strings or 
+                                                      a dict (e.g. the returned data from
+                                                      plenty_api_get_bi_raw_files )
+            OPTIONAL
+            download_directory  [str]             -   Local filepath to store the data
+                                                      default is the current directory  
 
         Return:
-                        [dict]  -   API response in as javascript object
-                                    notation
+                        [dict]  -   list of paths to downloaded files
         """
+        # Workaround to fetch a single file, specified by a string
+        if isinstance(remote_files, str):
+            remote_files = [remote_files]
 
-        ''' Intercept itemsPerPage query, so we can determinate if we've reaced the last page
-            Plenty-Default: 20, but we set it to 100 (max) if no parameter was set. So we save
-            request, if there is a huge amount of data
-        '''        
+        # List to collect the responses
+        response_list = []
+        for remote_file in remote_files:
+            remote_file_path_query = None
+            # if a response from plenty_api_get_bi_raw_files was passed, extract path
+            if isinstance(remote_file, dict) and 'path' in remote_file:
+                remote_file_path_query = remote_file['path']
+            
+            # if a list is given, just use the string
+            if isinstance(remote_file, str):
+                remote_file_path_query = remote_file
 
-        if 'itemsPerPage' not in query:
-            query.update({'itemsPerPage':100})
-        
-        if 'page' not in query:
-            query.update({'page':1})
-
-        logging.warn(f"searchresult for {domain} API-Request is not paginated! Explorative fetching may take some time!")
-        response = self.__plenty_api_request(method='get',
-                                             domain=domain,
-                                             path=path,
-                                             query=query)
-        if not response:
-            return None
-
-        if ((isinstance(response, dict) and 'error' in response.keys()) or
-                isinstance(response, list)):
-            return response
-
-
-        page_info = utils.sniff_response_format(response=response)
-        entries = response[page_info['data']]
-
-        if len(response[page_info['data']]) == query['itemsPerPage']:
-            while True:
-                logging.debug(f"fetching page {query['page'] + 1}")
-                query.update({'page': query['page'] + 1})
+            if remote_file_path_query is not None:
                 response = self.__plenty_api_request(method='get',
-                                                    domain=domain,
-                                                    path=path,
-                                                    query=query)
-                if not response:
-                    return None
+                                                    domain='bi_raw',
+                                                    path='/file',
+                                                    query={'path':remote_file_path_query})
+                if isinstance(response, bytes):
+                    file_destination = os.path.join(download_directory, os.path.basename(remote_file_path_query))
+                    with open(file_destination, "wb") as requested_file:
+                            requested_file.write(response)
+                            response_list.append(file_destination)
+                else:
+                    response_list.append(None)
+                    logging.error('Failed to fetch {}'.format(remote_file_path_query))
+            else:
+                logging.error('validation error - invalid path query for BI files, check reference!')
+                response_list.append(None)
+        return response_list       
 
-                if isinstance(response, dict) and 'error' in response.keys():
-                    logging.error(f"subsequent {domain} API requests failed.")
-                    return response
-
-                entries += response[page_info['data']]
-
-                if len(response[page_info['data']]) < query['itemsPerPage']:
-                    break
-
-        return entries
-
-
-    def __get_request_dump_file(self,
-                                             domain: str,
-                                             query: dict,
-                                             path: str = '',
-                                             download_filepath: str = '') -> dict:
-        """
-        Dumping raw response to file.
-        Used to download files via Plenty REST API
-
-        Parameter:
-            domain      [str]   -   bi_raw...
-            query       [dict]  -   Additional options for the request
-
-        Return:
-                        [dict]  -   filename on success or response on error
-        """
-        response = self.__plenty_api_request(method='get',
-                                             domain=domain,
-                                             path=path,
-                                             query=query)
-        
-        
-        
-        if not response:
-            return None
-
-        if ((isinstance(response, dict) and 'error' in response.keys()) or
-                isinstance(response, list)):
-            return response
-        
-        try:
-            requested_file = open(download_filepath, "wb")
-        except IOError as e:
-            raise
-        else:
-            with requested_file:
-                requested_file.write(response)
-                return {'file': download_filepath}
-
-
-    def plenty_api_get_bi_raw_files(self, refine: dict, download=False, download_directory='.') -> list:
+    def plenty_api_get_bi_raw_files(self, refine: dict = None, query: dict = None) -> list:
         """
         Get a list of BI-Rawdata files
 
         Parameters:
             refine              [dict]      -   Refine arguments for the BI
-            download            [bool]      -   Performing download
-            download_directory  [str]       -   Target directory
-
+            query               [dict]      -   Query arguments e.g. page-slicing
+            
         Return:
                         [JSON(Dict) / DataFrame] <= self.data_format
         """
-
-
-
         query = utils.sanity_check_parameter(domain='bi_raw',
-                                             query=None,
+                                             query=query,
                                              refine=refine,
                                              additional=None)
 
-        bi_files = self.__repeat_get_request_for_all_unpaginated_records(domain='bi_raw',
-                                                           query=query)
+        # Prefer 100 items per page over the default of 20
+        if 'itemsPerPage' not in query:
+            query.update({'itemsPerPage':100})
+
+        bi_files = self.__repeat_get_request_for_all_records(domain='bi_raw',
+                                                             query=query)
+
         if isinstance(bi_files, dict) and 'error' in bi_files.keys():
             logging.error("GET BI-Rawfile list failed with:\n"
                           f"{bi_files}")
             return None
 
-        if download:
-            if len(bi_files) > 0:
-                for bi_file in bi_files:
-                    file_destination = os.path.join(download_directory, os.path.basename(bi_file['path']))
-                    self.__get_request_dump_file(domain='bi_raw', path='/file', query={'path':bi_file['path']}, download_filepath=file_destination)
-            else:
-                logging.warn('Nothing to download - got empty result! Ether check filter params or BI config in PlentyMarkets!')
         bi_files = utils.transform_data_type(data=bi_files,
                                            data_format=self.data_format)
 
         return bi_files
-
-        
 
     def plenty_api_get_pending_redistribution(
         self, order_id: int = 0, sender: int = 0, receiver: int = 0,

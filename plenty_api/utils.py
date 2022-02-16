@@ -186,7 +186,7 @@ def get_route(domain: str) -> str:
     return ''
 
 
-def sniff_response_format(response: dict) -> dict:
+def sniff_response_format(response: dict, query: dict) -> dict:
     """
     Identify the type of response format to iterate through it with the correct
     keys.
@@ -196,7 +196,8 @@ def sniff_response_format(response: dict) -> dict:
 
     Parameter:
         response                [dict]      -   GET request response body
-
+        query                   [dict]      -   Dictionary used for the params
+                                                field for the requests module.
     Returns:
                                 [dict]      -   Mapping of elements used for
                                                 iterating through the response
@@ -217,15 +218,14 @@ def sniff_response_format(response: dict) -> dict:
             'end_condition': lambda x: x['isLastPage'],
             'last_page': 'lastPageNumber'
         }
-
-    ''' Well, it seems, BI file list doesn't have a propper pagination, so lets try to implement a way to iterate'''
-    
-    if 'searchResult' in response:
-        
+    # BI file list doesn't have proper pagination    
+    if 'searchResult' in response: 
         return {
             'page': None,
             'data': 'searchResult',
-            'end_condition': None,
+            # Last page will contain less entries than expected
+            'end_condition': lambda x: len(x['searchResult']) < query['itemsPerPage'],
+            # Unknown, causes deactivation of the progress bar
             'last_page': None
         }
 
@@ -998,15 +998,3 @@ def summarize_shipment_packages(response: dict, mode: str) -> dict:
             key: list(values) for key, values in pallet_summary.items()
         }
     }
-
-
-
-# Usually, we expect application/json, witch we can encode and everything is fine.
-# But if we want to dump a file, like an export or BI data, the parser would fail
-# in this case, we need to dump the raw content.
-# In my opinion, it's better to explicitly allow special. which kind of data can be 
-# dumped, insted of stupitly dumping everything no-JSON-kind-of-stuff?
-def is_dumpable_respone(raw_respone):
-    if raw_respone.headers['Content-Type'] in constants.DUMPABLE_CONTENT_TYPES:
-        return True
-    return False

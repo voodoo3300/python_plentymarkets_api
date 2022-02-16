@@ -32,7 +32,8 @@
     + [Contact data (CRM)](#get-contact-section)
         * [get contact data](#get-contacts)
     + [Plenty BI related data](#get-bi-section)
-		* [get BI files](#get-bi)
+		* [get BI rawfile-list](#get-bi)
+		* [dump BI rawfiles]  (#dump-bi)
 - [POST-Requests](#post-requests)
     + [Item related data](#post-items-section)
         * [post image avaialability](#post-image-availability)
@@ -568,30 +569,52 @@ The 'dataframe' format transforms that data structure into a pandas DataFrame, w
 
 ##### plenty_api_get_bi_raw_files <a name='get-bi'></a>
 
-Get list of raw data files and (optionally) download raw data.
+Get list of BI raw data files
 
 [*Optional parameter*]:
-**dataName**:  restricts the search results to raw data files e.g. orders, orderItems.
 
-**processStatus**:  Current process status, the status is only changed by internal processing. If this filter is used, the filter dataNames may only contain one value.
+The **refine** field can be used to reduce the request by applying certain filters, valid values are:  
 
-**createdAtTimestamp**: UNIX-Timestamp from when daily generated raw data are to be filtered. This filter cannot be combined with the following filters: dataNames, processStatus
+ - *dataName* (Filter that restricts the search result to raw data files  
+   e.g. orders, orderItems. )
+ - *createdAtTimestamp* (UNIX-Timestamp from when daily generated raw data
+   are to be filtered.)
+ - *processStatus*  (Current process status, the status is only changed
+   by internal processing.  itemsPerPage (The number of raw data
+   files to be returned. This library uses a default value of 100
+   instead of 20, which is the default for the REST API.)
+ - *sortOrder* (Defines the sort    order, possible values are: asc, desc)
+   page (Page)
+   
+For custom slicing, the query param can be used:
 
-**itemsPerPage**: The number of raw data files to be returned. In this implemetation the maximum of 100 items is set to default (instead of Plenty's 20)
-The default number of files is 20 and the maximum is 100.
-
-**sortOrder**: Defines the sort order.
-Possible values are: asc, desc
-
-If **download** is set to True, the files will be stored. If it is set to False, only a file list is returned.
-
-A download directory can be specified with **download_directory**
+[*Example*]:
+```python
+query={'pages':{'start_page':1, 'end_page':5}} 
+```
 
 [*Output format*]:
 
 There are currently two supported output formats: 'json' and 'dataframe'.  
 The 'json' format simply returns the raw response, without page information and with multiple pages combined into a single data structure.  
 The 'dataframe' format transforms that data structure into a pandas DataFrame, which contains subparts in json, that can be split further by the user application.
+
+##### plenty_api_dump_bi_raw_file  <a name='dump-bi'></a>
+
+Dumps raw BI files
+
+[*Required parameter:*]:
+
+The **remote_files** field determines the path to the raw data. 
+This can be a string, a list of strings or a dict (e.g. the returned data from plenty_api_get_bi_raw_files)
+
+[*Optional parameter*]:
+
+The local download directory can be specified with **download_directory**
+
+[*Output format*]:
+
+This method returns a list of the paths to the downloaded files.
 
 ### POST requests: <a name='post-requests'></a>
 

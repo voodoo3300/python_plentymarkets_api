@@ -38,7 +38,7 @@ VALID_DOMAINS = [
     'warehouses',
     'property',
     'v2property',
-    'bi_raw',
+    'bi_raw'
 ]
 VALID_ROUTES = [
     '/rest/items/attributes',
@@ -56,7 +56,7 @@ VALID_ROUTES = [
     '/rest/stockmanagement/warehouses',
     '/rest/properties',
     '/rest/v2/properties',
-    '/rest/bi/raw-data',
+    '/rest/bi/raw-data'
 ]
 DOMAIN_ROUTE_MAP = dict(zip(VALID_DOMAINS, VALID_ROUTES))
 
@@ -124,7 +124,7 @@ VALID_REFINE_KEYS = {
         'processStatus',
         'createdAtTimestamp',
         'sortOrder',
-        'itemsPerPage,'
+        'itemsPerPage'
     ]
 }
 
